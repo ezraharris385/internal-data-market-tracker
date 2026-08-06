@@ -1,0 +1,48 @@
+{
+  "market": {
+    "name": "Minneapolis–St. Paul MSA",
+    "shortName": "MSP",
+    "center": [-93.2277, 44.9635],
+    "zoom": 10.3,
+    "pitch": 50,
+    "bearing": -12,
+    "maxBounds": null
+  },
+  "branding": {
+    "appName": "Internal Data Market Tracker",
+    "tagline": "Your data. Your market."
+  },
+  "data": {
+    "workbook": "data/properties.xlsx",
+    "sheet": "Properties"
+  },
+  "layers": {
+    "submarkets": [
+      "data/submarkets/msp_submarkets.kmz"
+    ],
+    "parcels": [
+      "data/parcels/sample_parcels.kmz"
+    ]
+  },
+  "fields": {
+    "id": "Property ID",
+    "name": "Property Name",
+    "address": "Address",
+    "city": "City",
+    "lat": "Latitude",
+    "lng": "Longitude",
+    "type": "Property Type",
+    "submarket": "Submarket",
+    "size": "Building SF",
+    "yearBuilt": "Year Built",
+    "occupancy": "Occupancy %",
+    "rent": "Asking Rent ($/SF)",
+    "image": "Image URL"
+  },
+  "typeOrder": ["Office", "Industrial", "Retail", "Multifamily", "Land", "Other"],
+  "basemap": {
+    "style": "https://tiles.openfreemap.org/styles/liberty",
+    "satelliteTiles": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    "satelliteAttribution": "Imagery © Esri, Maxar, Earthstar Geographics"
+  }
+}

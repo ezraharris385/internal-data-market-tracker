@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Internal Data Market Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">▦</span>
+      <div class="brand-text">
+        <span class="brand-name" id="brand-name">Internal Data Market Tracker</span>
+        <span class="brand-market" id="brand-market"></span>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="map">Map</button>
+      <button class="tab" data-view="database">Market Database</button>
+      <button class="tab" data-view="properties">Properties</button>
+    </nav>
+    <div class="data-status" id="data-status">loading data…</div>
+  </header>
+
+  <!-- ============ MAP VIEW ============ -->
+  <main id="view-map" class="view active">
+    <div id="map"></div>
+
+    <!-- Search -->
+    <div class="map-search" id="map-search">
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input id="search-input" type="text" placeholder="Search properties, addresses, submarkets…" autocomplete="off" spellcheck="false" />
+        <button class="search-clear" id="search-clear" title="Clear">✕</button>
+      </div>
+      <div class="search-suggestions" id="search-suggestions"></div>
+    </div>
+
+    <!-- Layer toggles -->
+    <div class="layers-panel" id="layers-panel">
+      <div class="layers-title">Layers</div>
+      <label class="layer-row"><input type="checkbox" id="lyr-3d" checked /> 3D buildings</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-submarkets" checked /> Submarket boundaries</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-submarket-labels" checked /> Submarket labels</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-parcels" checked /> Property boundaries</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-properties" checked /> Properties</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-satellite" /> Satellite imagery</label>
+      <div class="layers-divider"></div>
+      <div class="layers-title">Property types</div>
+      <div id="type-toggles"></div>
+      <div class="layers-divider"></div>
+      <button class="btn-ghost" id="btn-pitch">Tilt: 3D</button>
+      <button class="btn-ghost" id="btn-reset-view">Reset view</button>
+    </div>
+
+    <!-- Property detail drawer -->
+    <aside class="detail-drawer" id="detail-drawer">
+      <button class="drawer-close" id="drawer-close">✕</button>
+      <div class="drawer-content" id="drawer-content"></div>
+    </aside>
+  </main>
+
+  <!-- ============ MARKET DATABASE VIEW ============ -->
+  <main id="view-database" class="view">
+    <div class="page">
+      <div class="page-head">
+        <h1 id="db-title">Market Database</h1>
+        <p class="page-sub">Aggregates computed exclusively from your uploaded workbook — nothing external.</p>
+      </div>
+      <div class="filter-row" id="db-type-filter"></div>
+      <div class="cards" id="db-cards"></div>
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Building SF by submarket</h3><div class="chart-wrap"><canvas id="chart-sf"></canvas></div></div>
+        <div class="chart-card"><h3>Property type mix</h3><div class="chart-wrap"><canvas id="chart-mix"></canvas></div></div>
+        <div class="chart-card"><h3>Avg asking rent by submarket ($/SF)</h3><div class="chart-wrap"><canvas id="chart-rent"></canvas></div></div>
+        <div class="chart-card"><h3>Avg occupancy by submarket (%)</h3><div class="chart-wrap"><canvas id="chart-occ"></canvas></div></div>
+      </div>
+      <div class="table-card">
+        <h3>Submarket summary</h3>
+        <div class="table-scroll"><table id="submarket-table"></table></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ PROPERTIES VIEW ============ -->
+  <main id="view-properties" class="view">
+    <div class="page">
+      <div class="page-head">
+        <h1>Properties</h1>
+        <p class="page-sub" id="props-count"></p>
+      </div>
+      <div class="filter-row">
+        <input class="table-filter" id="props-filter" type="text" placeholder="Filter by name, address, submarket…" />
+        <select id="props-type-select"><option value="">All types</option></select>
+      </div>
+      <div class="table-card">
+        <div class="table-scroll"><table id="properties-table"></table></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="drop-overlay" id="drop-overlay">
+    <div class="drop-inner">Drop an <b>.xlsx</b> workbook or <b>.kmz / .kml / .geojson</b> boundary file to preview it locally</div>
+  </div>
+
+  <footer class="statusbar">
+    <span id="status-note">Update <code>data/properties.xlsx</code> (or drop a file here) — the platform rebuilds itself from your workbook.</span>
+  </footer>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/detail.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/properties.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
