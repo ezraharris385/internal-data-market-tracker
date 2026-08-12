@@ -2,7 +2,6 @@
 
 IDMT.database = (function () {
   let charts = {};
-  let typeFilter = '';
   const INK = { primary: '#ffffff', secondary: '#c3c2b7', muted: '#898781', grid: '#2c2c2a', surface: '#1a1a19' };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -83,8 +82,9 @@ IDMT.database = (function () {
   }
 
   function renderCards(totals) {
+    const nf = IDMT.filterEngine.activeCount();
     document.getElementById('db-cards').innerHTML = `
-      <div class="card"><div class="k">Properties</div><div class="v">${IDMT.fmt.int(totals.count)}</div><div class="s">${typeFilter || 'all types'}</div></div>
+      <div class="card"><div class="k">Properties</div><div class="v">${IDMT.fmt.int(totals.count)}</div><div class="s">${nf ? nf + ' filter' + (nf === 1 ? '' : 's') + ' applied' : 'all properties'}</div></div>
       <div class="card"><div class="k">Total building SF</div><div class="v">${IDMT.fmt.int(totals.sf)}</div><div class="s">square feet tracked</div></div>
       <div class="card"><div class="k">Avg occupancy</div><div class="v">${IDMT.fmt.pct(totals.avgOcc)}</div><div class="s">weighted by property</div></div>
       <div class="card"><div class="k">Avg asking rent</div><div class="v">${totals.avgRent === null ? '—' : IDMT.fmt.usd(totals.avgRent)}</div><div class="s">per SF</div></div>
@@ -94,11 +94,16 @@ IDMT.database = (function () {
   function renderTypeFilter() {
     const el = document.getElementById('db-type-filter');
     const types = Object.keys(IDMT.typeColors);
-    el.innerHTML = `<button class="chip ${!typeFilter ? 'active' : ''}" data-type="">All types</button>` +
-      types.map((t) => `<button class="chip ${typeFilter === t ? 'active' : ''}" data-type="${esc(t)}">
+    const visible = IDMT.filterEngine.visibleTypes();
+    const allOn = visible.length === types.length;
+    const solo = visible.length === 1 ? visible[0] : null;
+    el.innerHTML = `<button class="chip ${allOn ? 'active' : ''}" data-type="">All types</button>` +
+      types.map((t) => `<button class="chip ${solo === t ? 'active' : ''}" data-type="${esc(t)}">
         <span class="swatch" style="background:${IDMT.typeColors[t]}"></span>${esc(t)}</button>`).join('');
     el.querySelectorAll('.chip').forEach((chip) => {
-      chip.addEventListener('click', () => { typeFilter = chip.dataset.type; render(); });
+      chip.addEventListener('click', () => {
+        IDMT.filterEngine.soloType(chip.dataset.type || null);
+      });
     });
   }
 
@@ -126,7 +131,7 @@ IDMT.database = (function () {
   function render() {
     if (!IDMT.properties.length) return;
     chartDefaults();
-    const { rows, totals, typeMix } = IDMT.aggregate(typeFilter);
+    const { rows, totals, typeMix } = IDMT.aggregate();
     document.getElementById('db-title').textContent = IDMT.config.market.name + ' — Market Database';
     renderTypeFilter();
     renderCards(totals);

@@ -1,12 +1,16 @@
-/* map.js — 3D MapLibre map: basemap, building extrusions, submarket/parcel boundaries,
-   property pins, layer toggles, focus/fly-to. Market-agnostic: everything comes from config.json. */
+/* map.js — 3D MapLibre map: basemap, animated building extrusions, submarket/parcel
+   boundaries, property pins, layer toggles, cinematic camera moves, orbit + presentation
+   modes. Market-agnostic: everything comes from config.json. */
 
 IDMT.map = (function () {
   let map = null;
   let hoverPopup = null;
   let styleReady = false;
   let is3D = true;
-  let hiddenTypes = new Set();
+  let orbiting = false;
+  let buildingsGrown = false;
+  let selectedId = null;
+  let pulseRAF = null;
 
   function firstSymbolLayerId() {
     const layers = map.getStyle().layers || [];
@@ -33,14 +37,16 @@ IDMT.map = (function () {
     map = new maplibregl.Map({
       container: 'map',
       style: IDMT.config.basemap.style,
+      // cinematic intro: start flat + pulled back, then fly to the configured 3D view
       center: m.center,
-      zoom: m.zoom,
-      pitch: m.pitch || 50,
-      bearing: m.bearing || 0,
+      zoom: Math.max(m.zoom - 1.6, 3),
+      pitch: 0,
+      bearing: 0,
       maxBounds: m.maxBounds || undefined,
       antialias: true,
       attributionControl: { compact: true },
     });
+    IDMT._map = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }), 'bottom-left');
     hoverPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 });
@@ -55,11 +61,26 @@ IDMT.map = (function () {
       addPropertyLayers();
       wireInteractions();
       refreshData();
+      flyIntro();
     });
-    IDMT._map = map;
+    // buildings "grow out of the ground" the first time the camera gets close
+    map.on('zoomend', () => {
+      if (!buildingsGrown && map.getZoom() >= 13) growBuildings();
+    });
+    map.on('mousedown', stopOrbit);
     new ResizeObserver(() => map.resize()).observe(document.getElementById('map'));
     wireControls();
     return map;
+  }
+
+  function flyIntro() {
+    const m = IDMT.config.market;
+    setTimeout(() => {
+      map.flyTo({
+        center: m.center, zoom: m.zoom, pitch: m.pitch || 50, bearing: m.bearing || 0,
+        duration: 4000, essential: true,
+      });
+    }, 600);
   }
 
   /* ---------- base layers ---------- */
@@ -77,9 +98,20 @@ IDMT.map = (function () {
     );
   }
 
+  function buildingHeightExpr(mult) {
+    return ['*', mult, ['coalesce', ['get', 'render_height'], 10]];
+  }
+
   function addBuildings() {
     const src = vectorSourceKey();
     if (!src) return;
+    // If the basemap style ships its own extrusion layer (liberty's "building-3d"),
+    // hide it — ours is the one wired to the toggle and the grow animation.
+    for (const l of map.getStyle().layers || []) {
+      if (l.type === 'fill-extrusion' && !l.id.startsWith('idmt')) {
+        map.setLayoutProperty(l.id, 'visibility', 'none');
+      }
+    }
     map.addLayer(
       {
         id: 'idmt-3d-buildings',
@@ -88,14 +120,33 @@ IDMT.map = (function () {
         'source-layer': 'building',
         minzoom: 12.5,
         paint: {
-          'fill-extrusion-color': '#343432',
-          'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 10],
+          'fill-extrusion-color': [
+            'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 10],
+            0, '#dcdad3', 60, '#c7c4bb', 150, '#aeaba1',
+          ],
+          'fill-extrusion-height': buildingHeightExpr(1),
           'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-          'fill-extrusion-opacity': 0.85,
+          'fill-extrusion-opacity': 0.92,
         },
       },
       firstSymbolLayerId()
     );
+  }
+
+  /* Animated rebuild: extrusion heights ease from 0 → full over ~2.2s. */
+  function growBuildings() {
+    if (!styleReady || !map.getLayer('idmt-3d-buildings')) return;
+    buildingsGrown = true;
+    const start = performance.now(), dur = 2200;
+    function frame(now) {
+      const t = Math.min(1, (now - start) / dur);
+      const e = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      if (map.getLayer('idmt-3d-buildings')) {
+        map.setPaintProperty('idmt-3d-buildings', 'fill-extrusion-height', buildingHeightExpr(Math.max(e, 0.001)));
+      }
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
   }
 
   /* ---------- boundaries ---------- */
@@ -173,12 +224,20 @@ IDMT.map = (function () {
     });
   }
 
-  function applyTypeFilter() {
-    if (!styleReady) return;
-    const filter = hiddenTypes.size
-      ? ['!', ['in', ['get', 'type'], ['literal', [...hiddenTypes]]]]
-      : null;
-    ['idmt-properties-pt', 'idmt-properties-halo'].forEach((id) => map.setFilter(id, filter));
+  /* Pulsing ring on the selected pin — runs only while something is selected. */
+  function pulseLoop(t0) {
+    if (!selectedId || !styleReady || !map.getLayer('idmt-selected')) { pulseRAF = null; return; }
+    const s = (performance.now() % 1600) / 1600;
+    const wave = 0.5 + 0.5 * Math.sin(s * Math.PI * 2);
+    map.setPaintProperty('idmt-selected', 'circle-stroke-width', 1.8 + wave * 2.2);
+    map.setPaintProperty('idmt-selected', 'circle-stroke-opacity', 0.55 + wave * 0.45);
+    pulseRAF = requestAnimationFrame(pulseLoop);
+  }
+
+  function setSelected(id) {
+    selectedId = id;
+    if (styleReady) map.setFilter('idmt-selected', ['==', ['get', 'id'], id ?? '__none__']);
+    if (id && !pulseRAF) pulseRAF = requestAnimationFrame(pulseLoop);
   }
 
   /* ---------- interactions ---------- */
@@ -205,6 +264,34 @@ IDMT.map = (function () {
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  /* ---------- orbit + presentation ---------- */
+
+  function startOrbit() {
+    if (orbiting) return;
+    orbiting = true;
+    document.getElementById('btn-orbit').textContent = 'Orbit: on';
+    let last = performance.now();
+    function spin(now) {
+      if (!orbiting) return;
+      const dt = now - last; last = now;
+      map.setBearing(map.getBearing() + dt * 0.004); // ~14°/s
+      requestAnimationFrame(spin);
+    }
+    requestAnimationFrame(spin);
+  }
+
+  function stopOrbit() {
+    orbiting = false;
+    const btn = document.getElementById('btn-orbit');
+    if (btn) btn.textContent = 'Orbit: off';
+  }
+
+  function toggleOrbit() { orbiting ? stopOrbit() : startOrbit(); }
+
+  function togglePresentation() {
+    document.body.classList.toggle('presentation');
+  }
+
   /* ---------- controls ---------- */
 
   function toggle(id, layers) {
@@ -229,8 +316,16 @@ IDMT.map = (function () {
       document.getElementById('btn-pitch').textContent = 'Tilt: ' + (is3D ? '3D' : '2D');
     });
     document.getElementById('btn-reset-view').addEventListener('click', () => {
+      stopOrbit();
       const m = IDMT.config.market;
       map.flyTo({ center: m.center, zoom: m.zoom, pitch: is3D ? (m.pitch || 50) : 0, bearing: m.bearing || 0 });
+    });
+    document.getElementById('btn-orbit').addEventListener('click', toggleOrbit);
+    document.getElementById('btn-grow').addEventListener('click', () => { buildingsGrown = true; growBuildings(); });
+    document.getElementById('btn-present').addEventListener('click', togglePresentation);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'h' && !e.target.matches('input, textarea, select')) togglePresentation();
+      if (e.key === 'o' && !e.target.matches('input, textarea, select')) toggleOrbit();
     });
   }
 
@@ -240,10 +335,9 @@ IDMT.map = (function () {
     Object.entries(IDMT.typeColors).forEach(([type, color]) => {
       const row = document.createElement('label');
       row.className = 'layer-row';
-      row.innerHTML = `<input type="checkbox" ${hiddenTypes.has(type) ? '' : 'checked'} /><span class="swatch" style="background:${color}"></span>${esc(type)}`;
+      row.innerHTML = `<input type="checkbox" ${IDMT.filters.hiddenTypes.has(type) ? '' : 'checked'} /><span class="swatch" style="background:${color}"></span>${esc(type)}`;
       row.querySelector('input').addEventListener('change', (e) => {
-        e.target.checked ? hiddenTypes.delete(type) : hiddenTypes.add(type);
-        applyTypeFilter();
+        IDMT.filterEngine.setTypeHidden(type, !e.target.checked);
       });
       el.appendChild(row);
     });
@@ -283,7 +377,13 @@ IDMT.map = (function () {
     map.getSource('idmt-parcels').setData(IDMT.parcels || emptyFC());
     map.getSource('idmt-submarket-labels').setData(submarketLabelPoints());
     renderTypeToggles();
-    applyTypeFilter();
+  }
+
+  /* Pins only: cheap refresh when filters change. */
+  function refreshPins() {
+    if (!styleReady) return;
+    map.getSource('idmt-properties').setData(IDMT.propertiesGeoJSON());
+    renderTypeToggles();
   }
 
   /* ---------- focus helpers ---------- */
@@ -291,15 +391,24 @@ IDMT.map = (function () {
   function focusProperty(id, opts = {}) {
     const p = IDMT.getProperty(id);
     if (!p) return;
+    stopOrbit();
     if (opts.fly !== false) {
-      map.flyTo({ center: [p._lng, p._lat], zoom: Math.max(map.getZoom(), 15.5), pitch: is3D ? (IDMT.config.market.pitch || 50) : 0 });
+      map.flyTo({
+        center: [p._lng, p._lat],
+        zoom: Math.max(map.getZoom(), 16),
+        pitch: is3D ? 58 : 0,
+        bearing: (map.getBearing() + 45) % 360, // sweep in for a more cinematic arrival
+        duration: 2600,
+        essential: true,
+      });
     }
-    if (styleReady) map.setFilter('idmt-selected', ['==', ['get', 'id'], id]);
+    setSelected(id);
     IDMT.detail.open(p);
   }
 
   function focusSubmarket(name) {
     if (!IDMT.submarkets) return;
+    stopOrbit();
     const feats = IDMT.submarkets.features.filter((f) => IDMT.featureName(f) === name);
     if (!feats.length) return;
     let minX = 180, minY = 90, maxX = -180, maxY = -90;
@@ -317,5 +426,5 @@ IDMT.map = (function () {
 
   function resize() { if (map) map.resize(); }
 
-  return { init, refreshData, focusProperty, focusSubmarket, resize };
+  return { init, refreshData, refreshPins, focusProperty, focusSubmarket, resize, growBuildings, toggleOrbit };
 })();

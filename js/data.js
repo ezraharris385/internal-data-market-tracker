@@ -77,6 +77,7 @@ IDMT.normalizeRow = function (row, i) {
   p._lat = num(row[f.lat]);
   p._lng = num(row[f.lng]);
   p._type = String(row[f.type] || 'Other').trim() || 'Other';
+  p._class = String(row[f.class] || '').trim();
   p._submarket = String(row[f.submarket] || '').trim();
   p._size = num(row[f.size]);
   p._occ = num(row[f.occupancy]);
@@ -108,12 +109,22 @@ IDMT.parseBoundaryBuffer = async function (buf, filename) {
   if (lower.endsWith('.kml')) {
     return IDMT.parseKml(new TextDecoder().decode(buf));
   }
-  // KMZ: a zip containing one or more .kml files
+  // Zip container: could be a KMZ (holds .kml) or a zipped shapefile (holds .shp/.dbf/.prj)
   const zip = await JSZip.loadAsync(buf);
-  const kmlName = Object.keys(zip.files).find((n) => n.toLowerCase().endsWith('.kml'));
-  if (!kmlName) throw new Error('No .kml inside ' + filename);
-  const text = await zip.files[kmlName].async('text');
-  return IDMT.parseKml(text);
+  const names = Object.keys(zip.files);
+  const kmlName = names.find((n) => n.toLowerCase().endsWith('.kml'));
+  if (kmlName) {
+    const text = await zip.files[kmlName].async('text');
+    return IDMT.parseKml(text);
+  }
+  if (names.some((n) => n.toLowerCase().endsWith('.shp'))) {
+    const gj = await shp(buf); // shpjs: zipped shapefile -> GeoJSON (or array per layer)
+    if (Array.isArray(gj)) {
+      return { type: 'FeatureCollection', features: gj.flatMap((fc) => fc.features || []) };
+    }
+    return gj;
+  }
+  throw new Error('No .kml or .shp inside ' + filename);
 };
 
 IDMT.loadBoundaryList = async function (urls) {
@@ -177,9 +188,10 @@ IDMT.assignSubmarkets = function () {
 /* ---------------- derived: GeoJSON of properties ---------------- */
 
 IDMT.propertiesGeoJSON = function () {
+  const list = IDMT.filteredProperties ? IDMT.filteredProperties() : IDMT.properties;
   return {
     type: 'FeatureCollection',
-    features: IDMT.properties.map((p) => ({
+    features: list.map((p) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [p._lng, p._lat] },
       properties: {
@@ -194,8 +206,10 @@ IDMT.getProperty = (id) => IDMT.properties.find((p) => p._id === id);
 
 /* ---------------- aggregates for the market database ---------------- */
 
-IDMT.aggregate = function (typeFilter) {
-  const props = IDMT.properties.filter((p) => !typeFilter || p._type === typeFilter);
+/* Aggregates always run over the globally filtered set, so the Market Database
+   reflects every active filter (types, class, size, asset-specific criteria…). */
+IDMT.aggregate = function () {
+  const props = IDMT.filteredProperties ? IDMT.filteredProperties() : IDMT.properties;
   const bySub = {};
   for (const p of props) {
     const key = p._submarket || 'Unassigned';

@@ -115,6 +115,74 @@ body {
 .suggestion .s-label { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .suggestion .s-kind { margin-left: auto; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); flex-shrink: 0; }
 
+/* filters */
+.search-row { display: flex; gap: 8px; align-items: center; }
+.search-row .search-box { flex: 1; }
+.filters-btn {
+  font: inherit; font-size: 12.5px; font-weight: 600;
+  color: var(--text-secondary); background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 9px 15px; cursor: pointer; white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+.filters-btn:hover { color: var(--text-primary); }
+.filters-btn.active { color: var(--text-primary); border-color: var(--accent); }
+.filters-btn .count {
+  background: var(--accent); color: #fff; border-radius: 10px;
+  font-size: 10.5px; padding: 1px 7px; margin-left: 6px;
+}
+.filters-panel {
+  display: none; margin-top: 8px;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  max-height: min(560px, calc(100vh - 220px)); overflow-y: auto;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+}
+.filters-panel.open { display: block; }
+.filters-panel.inline { box-shadow: none; margin-bottom: 18px; max-height: 460px; }
+.f-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: var(--text-muted); margin-bottom: 10px;
+}
+.f-clear {
+  font: inherit; font-size: 11.5px; color: var(--accent);
+  background: none; border: none; cursor: pointer;
+}
+.f-section { border-top: 1px solid var(--grid); padding-top: 10px; margin-top: 10px; }
+.f-section:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+.f-section-title {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-muted); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 7px;
+}
+.f-section-title .swatch { width: 9px; height: 9px; border-radius: 50%; }
+.f-row { display: flex; align-items: baseline; gap: 10px; padding: 4px 0; flex-wrap: wrap; }
+.f-label { font-size: 12px; color: var(--text-secondary); min-width: 150px; }
+.f-range { display: flex; align-items: center; gap: 6px; }
+.f-range input {
+  width: 92px; font: inherit; font-size: 12px; color: var(--text-primary);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 8px; outline: none;
+}
+.f-range input:focus { border-color: var(--accent); }
+.f-dash { color: var(--text-muted); }
+.f-chips { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
+.f-chip {
+  font: inherit; font-size: 11.5px; color: var(--text-secondary);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 3px 10px; cursor: pointer;
+}
+.f-chip:hover { color: var(--text-primary); }
+.f-chip.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.f-more { font-size: 11px; color: var(--text-muted); align-self: center; }
+
+/* presentation mode — clean frame for screen recording */
+body.presentation .topbar,
+body.presentation .layers-panel,
+body.presentation .map-search,
+body.presentation .statusbar { display: none; }
+body.presentation .view.active { position: fixed; inset: 0; }
+
 /* layers panel */
 .layers-panel {
   position: absolute; top: 14px; right: 14px; z-index: 20;
@@ -171,6 +239,10 @@ body {
 .stat-tile { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
 .stat-tile .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
 .stat-tile .v { font-size: 16px; font-weight: 700; margin-top: 2px; }
+.detail-section-title {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-muted); margin: 14px 0 4px;
+}
 .detail-fields { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .detail-fields td { padding: 6px 4px; border-bottom: 1px solid var(--grid); vertical-align: top; }
 .detail-fields td:first-child { color: var(--text-muted); width: 42%; }

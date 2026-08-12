@@ -6,14 +6,17 @@ Built as a zero-backend static site (GitHub Pages). Currently configured for the
 
 ## What it does
 
-- **3D interactive map** (MapLibre GL) of the whole MSA with building extrusions, tilt/rotate, and layer toggles: 3D buildings, submarket boundaries + labels, property boundaries, property pins by type, satellite imagery.
+- **3D interactive map** (MapLibre GL) of the whole MSA with animated building extrusions, tilt/rotate, and layer toggles: 3D buildings, submarket boundaries + labels, property boundaries, property pins by type, satellite imagery.
+- **Cinematic camera + animations** — fly-in intro, buildings that grow out of the ground as you zoom in ("Replay 3D build" to re-run), sweep-in arrivals when you select a property, a pulsing selection ring, and an **Orbit mode** (`o`) that slowly rotates the skyline.
+- **Presentation mode** (`h`) — hides all UI chrome for clean full-bleed screen recordings and live demos.
 - **Google-style search** — type-ahead suggestions across property names, addresses, IDs, and submarkets; pick one and the map flies to it.
 - **Connected Excel workbook** — `data/properties.xlsx` is the master database. Every property, every column. Commit a new version and the platform updates automatically on the next page load.
-- **KMZ boundary ingestion** — upload submarket boundaries and property/parcel boundaries as `.kmz`, `.kml`, or `.geojson`. Properties without a `Submarket` value in the workbook are auto-assigned by point-in-polygon against your submarket shapes.
-- **Property detail drawer** — photo, headline stats (SF, occupancy, rent, submarket), plus *every other column* in your workbook rendered automatically.
-- **Market / submarket database** — CoStar-style analytics computed **only from your uploaded data**: totals, type mix, SF / rent / occupancy by submarket, filterable by property type, with a click-through submarket summary table.
-- **Properties grid** — sortable, filterable table of the full workbook.
-- **Drag & drop preview** — drop an `.xlsx` or `.kmz` onto the page to preview it locally before committing.
+- **Boundary ingestion** — submarket and property/parcel boundaries as `.kmz`, `.kml`, `.geojson`, or **zipped shapefiles** (`.zip` with `.shp/.dbf/.prj`). Properties without a `Submarket` value in the workbook are auto-assigned by point-in-polygon against your submarket shapes.
+- **Schema-driven filtering** — ~19 universal criteria (class, size, vintage, occupancy, rent, cap rate, sale price, tenancy, owner type, zoning…) plus ~10 **asset-type-specific criteria per type** (clear height, dock doors and rail for industrial; units, unit mix and style for multifamily; traffic counts, frontage and anchors for retail; floor plates, skyway and LEED for office…). Type-specific filter sections appear only when that type is toggled on. One filter state drives the map pins, the market database, and the properties grid simultaneously.
+- **Property detail drawer** — photo, headline stats, an asset-type detail section, plus *every other column* in your workbook rendered automatically.
+- **Market / submarket database** — CoStar-style analytics computed **only from your uploaded data**: totals, type mix, SF / rent / occupancy by submarket, respecting every active filter, with a click-through submarket summary table.
+- **Properties grid** — sortable on every column; when a single asset type is active, that type's specific columns are appended automatically.
+- **Drag & drop preview** — drop an `.xlsx`, `.kmz`, or zipped shapefile onto the page to preview it locally before committing.
 
 ## Updating the data
 
@@ -23,11 +26,19 @@ Built as a zero-backend static site (GitHub Pages). Currently configured for the
 
 Leave `Submarket` blank to let the platform assign it from your submarket KMZ polygons; fill it in to override.
 
-### Boundaries (KMZ)
+### Boundaries (KMZ / shapefile / GeoJSON)
 
 - **Submarkets:** drop files into `data/submarkets/` and list them in `config.json → layers.submarkets`. Polygon `name` becomes the submarket name.
 - **Property/parcel boundaries:** same, in `data/parcels/` and `config.json → layers.parcels`.
-- Accepted formats: `.kmz`, `.kml`, `.geojson`.
+- Accepted formats: `.kmz`, `.kml`, `.geojson`, and **zipped shapefiles** (a `.zip` containing `.shp` + `.dbf` + `.prj`).
+
+**Recommended workflow:**
+
+1. **Hand-drawn submarkets** — draw polygons in [Google Earth Pro](https://www.google.com/earth/about/versions/) (free desktop app), name each polygon, `File → Save Place As → .kmz`, commit. Fastest way to author custom submarket lines.
+2. **Parcel-true property boundaries** — don't draw these by hand. County GIS portals publish parcel shapefiles/GeoJSON free (for MSP: Hennepin and Ramsey County open-data portals). Filter to your parcels, export, zip, commit.
+3. **Cleanup / conversion / simplification** — [mapshaper.org](https://mapshaper.org) (free, in-browser): converts between shapefile/KML/GeoJSON, merges layers, renames attributes, and simplifies heavy county files so the site stays fast. Aim for < 1–2 MB per boundary file.
+
+If your shapefile's name attribute isn't `name`, either rename it in mapshaper (`rename-fields name=YOURFIELD`) or export as KML/GeoJSON with the name set.
 
 ### Property images
 

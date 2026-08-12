@@ -13,12 +13,22 @@ IDMT.detail = (function () {
       ? `<img class="detail-hero" src="${esc(p._image)}" alt="" onerror="this.outerHTML='<div class=\\'detail-hero-fallback\\'>▦</div>'" />`
       : `<div class="detail-hero-fallback">▦</div>`;
 
-    // Every workbook column, minus the ones already shown as headline stats
+    // Every workbook column, minus the ones already shown as headline stats.
+    // Asset-type-specific columns (from config schema) get their own section.
     const shownCols = new Set([f.name, f.address, f.type, f.size, f.occupancy, f.rent, f.image, f.lat, f.lng]);
+    const typeCols = ((IDMT.config.schema && IDMT.config.schema.byType[p._type]) || []).map((d) => d.col);
+    const typeColSet = new Set(typeCols);
+    const rowHtml = (c) => `<tr><td>${esc(c)}</td><td>${esc(p[c])}</td></tr>`;
+    const typeRows = typeCols.filter((c) => String(p[c] ?? '') !== '').map(rowHtml).join('');
     const rest = IDMT.columns
-      .filter((c) => !shownCols.has(c) && String(p[c] ?? '') !== '')
-      .map((c) => `<tr><td>${esc(c)}</td><td>${esc(p[c])}</td></tr>`)
+      .filter((c) => !shownCols.has(c) && !typeColSet.has(c) && String(p[c] ?? '') !== '')
+      .map(rowHtml)
       .join('');
+    const typeSection = typeRows
+      ? `<div class="detail-section-title" style="color:${color}">${esc(p._type)} details</div>
+         <table class="detail-fields"><tbody>${typeRows}</tbody></table>
+         <div class="detail-section-title">Property record</div>`
+      : '';
 
     el.innerHTML = `
       ${hero}
@@ -34,6 +44,7 @@ IDMT.detail = (function () {
           <div class="stat-tile"><div class="k">Asking rent</div><div class="v">${p._rent === null ? '—' : IDMT.fmt.usd(p._rent) + '/SF'}</div></div>
           <div class="stat-tile"><div class="k">Submarket</div><div class="v" style="font-size:13px">${esc(p._submarket || '—')}</div></div>
         </div>
+        ${typeSection}
         <table class="detail-fields"><tbody>${rest}</tbody></table>
         <div class="detail-actions">
           <button class="btn-primary" id="detail-zoom">Zoom to property</button>

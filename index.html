@@ -29,14 +29,18 @@
   <main id="view-map" class="view active">
     <div id="map"></div>
 
-    <!-- Search -->
+    <!-- Search + filters -->
     <div class="map-search" id="map-search">
-      <div class="search-box">
-        <span class="search-icon">⌕</span>
-        <input id="search-input" type="text" placeholder="Search properties, addresses, submarkets…" autocomplete="off" spellcheck="false" />
-        <button class="search-clear" id="search-clear" title="Clear">✕</button>
+      <div class="search-row">
+        <div class="search-box">
+          <span class="search-icon">⌕</span>
+          <input id="search-input" type="text" placeholder="Search properties, addresses, submarkets…" autocomplete="off" spellcheck="false" />
+          <button class="search-clear" id="search-clear" title="Clear">✕</button>
+        </div>
+        <button class="filters-btn" id="map-filters-btn">Filters</button>
       </div>
       <div class="search-suggestions" id="search-suggestions"></div>
+      <div class="filters-panel" id="map-filters-panel"></div>
     </div>
 
     <!-- Layer toggles -->
@@ -53,6 +57,9 @@
       <div id="type-toggles"></div>
       <div class="layers-divider"></div>
       <button class="btn-ghost" id="btn-pitch">Tilt: 3D</button>
+      <button class="btn-ghost" id="btn-orbit">Orbit: off</button>
+      <button class="btn-ghost" id="btn-grow">Replay 3D build</button>
+      <button class="btn-ghost" id="btn-present">Presentation (h)</button>
       <button class="btn-ghost" id="btn-reset-view">Reset view</button>
     </div>
 
@@ -95,7 +102,9 @@
       <div class="filter-row">
         <input class="table-filter" id="props-filter" type="text" placeholder="Filter by name, address, submarket…" />
         <select id="props-type-select"><option value="">All types</option></select>
+        <button class="filters-btn" id="props-filters-btn">Advanced filters</button>
       </div>
+      <div class="filters-panel inline" id="props-filters-panel"></div>
       <div class="table-card">
         <div class="table-scroll"><table id="properties-table"></table></div>
       </div>
@@ -103,7 +112,7 @@
   </main>
 
   <div class="drop-overlay" id="drop-overlay">
-    <div class="drop-inner">Drop an <b>.xlsx</b> workbook or <b>.kmz / .kml / .geojson</b> boundary file to preview it locally</div>
+    <div class="drop-inner">Drop an <b>.xlsx</b> workbook or a boundary file (<b>.kmz / .kml / .geojson / zipped shapefile</b>) to preview it locally</div>
   </div>
 
   <footer class="statusbar">
@@ -114,8 +123,10 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
+  <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/filters.js"></script>
   <script src="js/search.js"></script>
   <script src="js/map.js"></script>
   <script src="js/detail.js"></script>
