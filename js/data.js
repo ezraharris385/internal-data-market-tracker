@@ -4,8 +4,10 @@
 const IDMT = window.IDMT = {
   config: null,
   properties: [],       // normalized rows: raw columns + _id,_name,_lat,_lng,_type,_submarket,_size,_occ,_rent
+  rawRows: [],          // untouched workbook rows (edit overlay applies on top)
   columns: [],          // original header order from the workbook
-  submarkets: null,     // GeoJSON FeatureCollection (polygons, name property)
+  submarketSets: { default: null, byType: {} }, // per-asset-type boundary sets
+  submarkets: null,     // the currently ACTIVE FeatureCollection (depends on visible types)
   parcels: null,        // GeoJSON FeatureCollection
   typeColors: {},       // property type -> hex
   listeners: {},
@@ -33,6 +35,10 @@ IDMT.fmt = {
   sf: (n) => (n === null ? '—' : Math.round(n).toLocaleString('en-US') + ' SF'),
   pct: (n) => (n === null ? '—' : (Math.round(n * 10) / 10).toLocaleString('en-US') + '%'),
   usd: (n) => (n === null ? '—' : '$' + (Math.round(n * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })),
+  usd0: (n) => (n === null ? '—' : '$' + Math.round(n).toLocaleString('en-US')),
+  num: (n) => (n === null ? '—' : (Math.round(n * 10) / 10).toLocaleString('en-US')),
+  year: (n) => (n === null ? '—' : String(Math.round(n))),
+  count: (n) => (n === null ? '—' : String(Math.round(n))),
 };
 
 /* ---------------- config + workbook ---------------- */
@@ -62,9 +68,63 @@ IDMT.ingestWorkbook = function (arrayBuffer) {
   const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
   if (!rows.length) throw new Error('Sheet "' + sheetName + '" has no rows');
   IDMT.columns = XLSX.utils.sheet_to_json(ws, { header: 1 })[0].map(String);
-  IDMT.properties = rows.map((row, i) => IDMT.normalizeRow(row, i)).filter((p) => p._lat !== null && p._lng !== null);
+  IDMT.rawRows = rows;
+  IDMT.rebuildProperties();
+};
+
+/* Rebuild normalized properties from rawRows + the local edit overlay. */
+IDMT.rebuildProperties = function () {
+  const overlay = IDMT.edits.all();
+  const f = IDMT.config.fields;
+  IDMT.properties = IDMT.rawRows.map((raw, i) => {
+    const id = String(raw[f.id] || 'P-' + (i + 1));
+    const merged = overlay[id] ? Object.assign({}, raw, overlay[id]) : raw;
+    return IDMT.normalizeRow(merged, i);
+  }).filter((p) => p._lat !== null && p._lng !== null);
   IDMT.assignTypeColors();
-  if (IDMT.submarkets) IDMT.assignSubmarkets();
+  IDMT.refreshActiveSubmarkets();
+  IDMT.assignSubmarkets();
+};
+
+/* ---------------- local edit overlay (browser-side; export to commit) ---------------- */
+
+IDMT.edits = (function () {
+  const KEY = 'idmt-edits';
+  let cache = null;
+  function all() {
+    if (cache === null) {
+      try { cache = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { cache = {}; }
+    }
+    return cache;
+  }
+  function save(id, changes) {
+    const o = all();
+    o[id] = Object.assign(o[id] || {}, changes);
+    localStorage.setItem(KEY, JSON.stringify(o));
+  }
+  function clear() { cache = {}; localStorage.removeItem(KEY); }
+  function count() { return Object.keys(all()).length; }
+  return { all, save, clear, count };
+})();
+
+IDMT.saveEdits = function (id, changes) {
+  IDMT.edits.save(id, changes);
+  IDMT.rebuildProperties();
+  IDMT.emit('data');
+};
+
+/* Export the current data (workbook + local edits) back to .xlsx for committing. */
+IDMT.exportWorkbook = function () {
+  const overlay = IDMT.edits.all();
+  const f = IDMT.config.fields;
+  const rows = IDMT.rawRows.map((raw, i) => {
+    const id = String(raw[f.id] || 'P-' + (i + 1));
+    return overlay[id] ? Object.assign({}, raw, overlay[id]) : raw;
+  });
+  const ws = XLSX.utils.json_to_sheet(rows, { header: IDMT.columns });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, IDMT.config.data.sheet || 'Properties');
+  XLSX.writeFile(wb, 'properties.xlsx');
 };
 
 IDMT.normalizeRow = function (row, i) {
@@ -78,6 +138,8 @@ IDMT.normalizeRow = function (row, i) {
   p._lng = num(row[f.lng]);
   p._type = String(row[f.type] || 'Other').trim() || 'Other';
   p._class = String(row[f.class] || '').trim();
+  p._state = String(row[f.state] || '').trim();
+  p._county = String(row[f.county] || '').trim();
   p._submarket = String(row[f.submarket] || '').trim();
   p._size = num(row[f.size]);
   p._occ = num(row[f.occupancy]);
@@ -143,9 +205,49 @@ IDMT.loadBoundaryList = async function (urls) {
 };
 
 IDMT.loadBoundaries = async function () {
-  IDMT.submarkets = await IDMT.loadBoundaryList(IDMT.config.layers.submarkets);
+  const cfg = IDMT.config.layers.submarkets;
+  if (Array.isArray(cfg)) {
+    // legacy shape: one flat list = the default set
+    IDMT.submarketSets = { default: await IDMT.loadBoundaryList(cfg), byType: {} };
+  } else {
+    IDMT.submarketSets = { default: await IDMT.loadBoundaryList(cfg.default || []), byType: {} };
+    for (const [type, urls] of Object.entries(cfg.byType || {})) {
+      if (urls && urls.length) {
+        const fc = await IDMT.loadBoundaryList(urls);
+        if (fc.features.length) IDMT.submarketSets.byType[type] = fc;
+      }
+    }
+  }
   IDMT.parcels = await IDMT.loadBoundaryList(IDMT.config.layers.parcels);
+  IDMT.refreshActiveSubmarkets();
   IDMT.assignSubmarkets();
+};
+
+/* The submarket set for a given asset type (falls back to default). */
+IDMT.submarketSetFor = function (type) {
+  return IDMT.submarketSets.byType[type] || IDMT.submarketSets.default;
+};
+
+/* IDMT.submarkets = what the MAP shows: a type-specific set when exactly one asset
+   class is toggled on (and has its own boundaries), otherwise the default set. */
+IDMT.refreshActiveSubmarkets = function () {
+  let active = IDMT.submarketSets.default;
+  if (IDMT.filterEngine) {
+    const visible = IDMT.filterEngine.visibleTypes();
+    if (visible.length === 1 && IDMT.submarketSets.byType[visible[0]]) {
+      active = IDMT.submarketSets.byType[visible[0]];
+    }
+  }
+  IDMT.submarkets = active;
+};
+
+/* Every submarket name across every set (search + filter options). */
+IDMT.allSubmarketNames = function () {
+  const names = new Set();
+  const add = (fc) => fc && fc.features.forEach((f) => names.add(IDMT.featureName(f)));
+  add(IDMT.submarketSets.default);
+  Object.values(IDMT.submarketSets.byType).forEach(add);
+  return [...names].sort();
 };
 
 /* ---------------- submarket assignment (point in polygon) ---------------- */
@@ -175,14 +277,72 @@ IDMT.featureName = function (f) {
   return (f.properties && (f.properties.name || f.properties.Name || f.properties.NAME)) || 'Unnamed';
 };
 
-/* A workbook Submarket column always wins; polygons fill in the blanks. */
+/* A workbook Submarket column always wins; polygons fill in the blanks.
+   Each property is assigned from ITS asset type's boundary set (fallback: default),
+   so industrial submarkets and office submarkets can differ. */
 IDMT.assignSubmarkets = function () {
-  if (!IDMT.submarkets || !IDMT.properties.length) return;
+  if (!IDMT.properties.length) return;
   for (const p of IDMT.properties) {
     if (p._submarket) continue;
-    const hit = IDMT.submarkets.features.find((f) => pointInFeature([p._lng, p._lat], f));
+    const set = IDMT.submarketSetFor(p._type);
+    if (!set || !set.features.length) continue;
+    const hit = set.features.find((f) => pointInFeature([p._lng, p._lat], f));
     p._submarket = hit ? IDMT.featureName(hit) : 'Unassigned';
   }
+};
+
+/* ---------------- module aggregation (database sub-tabs) ---------------- */
+
+function passesWhere(p, where) {
+  if (!where) return true;
+  if (where.nonEmpty) return String(p[where.col] ?? '') !== '';
+  if (where.in) return where.in.includes(String(p[where.col] ?? '').trim());
+  return true;
+}
+
+IDMT.moduleAggregate = function (mod) {
+  const base = IDMT.filteredProperties();
+  const rows = mod.rowFilter ? base.filter((p) => passesWhere(p, mod.rowFilter)) : base;
+
+  const metrics = (mod.metrics || []).map((m) => {
+    const pool = m.where ? rows.filter((p) => passesWhere(p, m.where)) : rows;
+    let value = null;
+    if (m.agg === 'count') {
+      value = pool.filter((p) => String(p[m.col] ?? '') !== '').length;
+    } else if (m.agg === 'countValue') {
+      value = pool.filter((p) => String(p[m.col] ?? '').trim() === m.value).length;
+    } else {
+      const nums = pool.map((p) => num(p[m.col])).filter((n) => n !== null);
+      if (nums.length) {
+        if (m.agg === 'sum') value = nums.reduce((a, b) => a + b, 0);
+        else if (m.agg === 'avg') value = nums.reduce((a, b) => a + b, 0) / nums.length;
+        else if (m.agg === 'max') value = Math.max(...nums);
+      }
+    }
+    const fmt = IDMT.fmt[m.fmt] || IDMT.fmt.int;
+    return { label: m.label, display: m.agg === 'count' || m.agg === 'countValue' ? IDMT.fmt.count(value ?? 0) : fmt(value) };
+  });
+
+  let chart = null;
+  if (mod.chart) {
+    const pool = mod.chart.where ? rows.filter((p) => passesWhere(p, mod.chart.where)) : rows;
+    const bySub = {};
+    for (const p of pool) {
+      const n = num(p[mod.chart.col]);
+      if (n === null) continue;
+      const key = p._submarket || 'Unassigned';
+      bySub[key] = bySub[key] || { sum: 0, n: 0 };
+      bySub[key].sum += n; bySub[key].n += 1;
+    }
+    const entries = Object.entries(bySub)
+      .map(([k, v]) => [k, mod.chart.agg === 'avg' ? v.sum / v.n : v.sum])
+      .sort((a, b) => b[1] - a[1]);
+    chart = { label: mod.chart.label, labels: entries.map((e) => e[0]), values: entries.map((e) => e[1]) };
+  }
+
+  // table rows: only properties with something to show in this module
+  const tableRows = rows.filter((p) => (mod.cols || []).some((c) => String(p[c] ?? '') !== ''));
+  return { metrics, chart, rows: tableRows, cols: mod.cols || [] };
 };
 
 /* ---------------- derived: GeoJSON of properties ---------------- */

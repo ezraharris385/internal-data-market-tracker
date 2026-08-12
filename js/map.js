@@ -379,10 +379,13 @@ IDMT.map = (function () {
     renderTypeToggles();
   }
 
-  /* Pins only: cheap refresh when filters change. */
-  function refreshPins() {
+  /* Filter-change refresh: pins + the active submarket set (which can swap when
+     a single asset class is toggled on and has its own boundaries). */
+  function refreshFiltered() {
     if (!styleReady) return;
     map.getSource('idmt-properties').setData(IDMT.propertiesGeoJSON());
+    map.getSource('idmt-submarkets').setData(IDMT.submarkets || emptyFC());
+    map.getSource('idmt-submarket-labels').setData(submarketLabelPoints());
     renderTypeToggles();
   }
 
@@ -407,9 +410,16 @@ IDMT.map = (function () {
   }
 
   function focusSubmarket(name) {
-    if (!IDMT.submarkets) return;
     stopOrbit();
-    const feats = IDMT.submarkets.features.filter((f) => IDMT.featureName(f) === name);
+    // look in the active set first, then across every per-type set
+    let feats = (IDMT.submarkets ? IDMT.submarkets.features : []).filter((f) => IDMT.featureName(f) === name);
+    if (!feats.length) {
+      const sets = [IDMT.submarketSets.default, ...Object.values(IDMT.submarketSets.byType)].filter(Boolean);
+      for (const set of sets) {
+        feats = set.features.filter((f) => IDMT.featureName(f) === name);
+        if (feats.length) break;
+      }
+    }
     if (!feats.length) return;
     let minX = 180, minY = 90, maxX = -180, maxY = -90;
     feats.forEach((f) => {
@@ -426,5 +436,5 @@ IDMT.map = (function () {
 
   function resize() { if (map) map.resize(); }
 
-  return { init, refreshData, refreshPins, focusProperty, focusSubmarket, resize, growBuildings, toggleOrbit };
+  return { init, refreshData, refreshFiltered, focusProperty, focusSubmarket, resize, growBuildings, toggleOrbit };
 })();

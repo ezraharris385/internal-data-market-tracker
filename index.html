@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css?v=0.3" />
 </head>
 <body>
   <header class="topbar">
@@ -77,18 +77,20 @@
         <h1 id="db-title">Market Database</h1>
         <p class="page-sub">Aggregates computed exclusively from your uploaded workbook — nothing external.</p>
       </div>
+      <div class="filter-row">
+        <div class="tab-search">
+          <div class="search-box slim">
+            <span class="search-icon">⌕</span>
+            <input id="db-search-input" type="text" placeholder="Search property, submarket, city, county, state…" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="search-suggestions" id="db-search-suggestions"></div>
+        </div>
+        <button class="filters-btn" id="db-filters-btn">Advanced filters</button>
+      </div>
+      <div class="filters-panel inline" id="db-filters-panel"></div>
       <div class="filter-row" id="db-type-filter"></div>
-      <div class="cards" id="db-cards"></div>
-      <div class="charts-grid">
-        <div class="chart-card"><h3>Building SF by submarket</h3><div class="chart-wrap"><canvas id="chart-sf"></canvas></div></div>
-        <div class="chart-card"><h3>Property type mix</h3><div class="chart-wrap"><canvas id="chart-mix"></canvas></div></div>
-        <div class="chart-card"><h3>Avg asking rent by submarket ($/SF)</h3><div class="chart-wrap"><canvas id="chart-rent"></canvas></div></div>
-        <div class="chart-card"><h3>Avg occupancy by submarket (%)</h3><div class="chart-wrap"><canvas id="chart-occ"></canvas></div></div>
-      </div>
-      <div class="table-card">
-        <h3>Submarket summary</h3>
-        <div class="table-scroll"><table id="submarket-table"></table></div>
-      </div>
+      <div class="filter-row module-tabs" id="db-module-tabs"></div>
+      <div id="db-module-body"></div>
     </div>
   </main>
 
@@ -100,9 +102,17 @@
         <p class="page-sub" id="props-count"></p>
       </div>
       <div class="filter-row">
-        <input class="table-filter" id="props-filter" type="text" placeholder="Filter by name, address, submarket…" />
+        <div class="tab-search">
+          <div class="search-box slim">
+            <span class="search-icon">⌕</span>
+            <input id="props-search-input" type="text" placeholder="Search property, submarket, city, county, state…" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="search-suggestions" id="props-search-suggestions"></div>
+        </div>
+        <input class="table-filter" id="props-filter" type="text" placeholder="Quick text filter…" />
         <select id="props-type-select"><option value="">All types</option></select>
         <button class="filters-btn" id="props-filters-btn">Advanced filters</button>
+        <button class="btn-ghost" id="props-export" title="Download an .xlsx with your local edits applied">⬇ Export workbook</button>
       </div>
       <div class="filters-panel inline" id="props-filters-panel"></div>
       <div class="table-card">
@@ -125,13 +135,13 @@
   <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/filters.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/detail.js"></script>
-  <script src="js/database.js"></script>
-  <script src="js/properties.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/data.js?v=0.3"></script>
+  <script src="js/filters.js?v=0.3"></script>
+  <script src="js/search.js?v=0.3"></script>
+  <script src="js/map.js?v=0.3"></script>
+  <script src="js/detail.js?v=0.3"></script>
+  <script src="js/database.js?v=0.3"></script>
+  <script src="js/properties.js?v=0.3"></script>
+  <script src="js/app.js?v=0.3"></script>
 </body>
 </html>

@@ -26,19 +26,23 @@ IDMT.app = (function () {
   }
 
   function renderFilterPanels() {
-    IDMT.filterEngine.renderPanel(document.getElementById('map-filters-panel'));
-    IDMT.filterEngine.renderPanel(document.getElementById('props-filters-panel'));
+    ['map-filters-panel', 'props-filters-panel', 'db-filters-panel'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) IDMT.filterEngine.renderPanel(el);
+    });
     const n = IDMT.filterEngine.activeCount();
-    ['map-filters-btn', 'props-filters-btn'].forEach((id, i) => {
+    [['map-filters-btn', 'Filters'], ['props-filters-btn', 'Advanced filters'], ['db-filters-btn', 'Advanced filters']].forEach(([id, label]) => {
       const btn = document.getElementById(id);
-      btn.innerHTML = (i === 0 ? 'Filters' : 'Advanced filters') + (n ? ` <span class="count">${n}</span>` : '');
+      if (!btn) return;
+      btn.innerHTML = label + (n ? ` <span class="count">${n}</span>` : '');
       btn.classList.toggle('active', n > 0);
     });
   }
 
   /* everything that shows data reacts to a filter change */
   function onFiltersChanged() {
-    IDMT.map.refreshPins();
+    IDMT.refreshActiveSubmarkets();   // per-asset-type submarket sets follow the type toggles
+    IDMT.map.refreshFiltered();
     IDMT.propertiesView.refreshTypeOptions();
     IDMT.propertiesView.render();
     IDMT.database.render();
@@ -47,13 +51,23 @@ IDMT.app = (function () {
     status(`${shown} of ${IDMT.properties.length} properties shown · ${IDMT.filterEngine.activeCount()} filters`);
   }
 
+  /* fired after local edits (notes, field changes) rebuild the dataset */
+  function onDataChanged() {
+    IDMT.search.build();
+    onFiltersChanged();
+    const n = IDMT.edits.count();
+    if (n) status(`${IDMT.filteredProperties().length} of ${IDMT.properties.length} shown · ${n} propert${n === 1 ? 'y' : 'ies'} with local edits — export the workbook to keep them`);
+  }
+
   function wireFilterPanels() {
     IDMT.on('filters', onFiltersChanged);
-    [['map-filters-btn', 'map-filters-panel'], ['props-filters-btn', 'props-filters-panel']].forEach(([btnId, panelId]) => {
-      document.getElementById(btnId).addEventListener('click', () => {
-        document.getElementById(panelId).classList.toggle('open');
-      });
+    IDMT.on('data', onDataChanged);
+    [['map-filters-btn', 'map-filters-panel'], ['props-filters-btn', 'props-filters-panel'], ['db-filters-btn', 'db-filters-panel']].forEach(([btnId, panelId]) => {
+      const btn = document.getElementById(btnId);
+      if (btn) btn.addEventListener('click', () => document.getElementById(panelId).classList.toggle('open'));
     });
+    const exportBtn = document.getElementById('props-export');
+    if (exportBtn) exportBtn.addEventListener('click', () => IDMT.exportWorkbook());
   }
 
   /* Drag-and-drop: preview a new workbook or boundary file locally without committing it. */
@@ -77,7 +91,9 @@ IDMT.app = (function () {
           status(`previewing ${file.name} (local only — commit it to data/ to publish)`);
         } else if (name.endsWith('.kmz') || name.endsWith('.kml') || name.endsWith('.geojson') || name.endsWith('.json') || name.endsWith('.zip')) {
           const gj = await IDMT.parseBoundaryBuffer(buf, file.name);
-          IDMT.submarkets = { type: 'FeatureCollection', features: [...(IDMT.submarkets?.features || []), ...gj.features] };
+          const def = IDMT.submarketSets.default || { type: 'FeatureCollection', features: [] };
+          IDMT.submarketSets.default = { type: 'FeatureCollection', features: [...def.features, ...gj.features] };
+          IDMT.refreshActiveSubmarkets();
           IDMT.properties.forEach((p) => { if (p._submarket === 'Unassigned') p._submarket = ''; });
           IDMT.assignSubmarkets();
           status(`previewing boundaries from ${file.name} (local only)`);

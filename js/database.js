@@ -1,7 +1,10 @@
-/* database.js — CoStar-style market & submarket analytics, computed only from the uploaded workbook. */
+/* database.js — CoStar-style market & submarket analytics, computed only from the uploaded
+   workbook. Sub-tabs (Overview, Capital Investment, Leasing, Development, Renovations,
+   Sales, Financing) are config-driven: each pulls its designated workbook columns. */
 
 IDMT.database = (function () {
   let charts = {};
+  let activeModule = 'Overview';
   const INK = { primary: '#ffffff', secondary: '#c3c2b7', muted: '#898781', grid: '#2c2c2a', surface: '#1a1a19' };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -12,13 +15,15 @@ IDMT.database = (function () {
     Chart.defaults.borderColor = INK.grid;
   }
 
-  function destroy(id) {
-    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  function destroyAll() {
+    Object.values(charts).forEach((c) => c.destroy());
+    charts = {};
   }
 
   function barChart(id, labels, values, color, fmt) {
-    destroy(id);
-    charts[id] = new Chart(document.getElementById(id), {
+    const el = document.getElementById(id);
+    if (!el) return;
+    charts[id] = new Chart(el, {
       type: 'bar',
       data: {
         labels,
@@ -52,8 +57,9 @@ IDMT.database = (function () {
   }
 
   function doughnut(id, labels, values, colors) {
-    destroy(id);
-    charts[id] = new Chart(document.getElementById(id), {
+    const el = document.getElementById(id);
+    if (!el) return;
+    charts[id] = new Chart(el, {
       type: 'doughnut',
       data: {
         labels,
@@ -81,15 +87,31 @@ IDMT.database = (function () {
     });
   }
 
-  function renderCards(totals) {
-    const nf = IDMT.filterEngine.activeCount();
-    document.getElementById('db-cards').innerHTML = `
-      <div class="card"><div class="k">Properties</div><div class="v">${IDMT.fmt.int(totals.count)}</div><div class="s">${nf ? nf + ' filter' + (nf === 1 ? '' : 's') + ' applied' : 'all properties'}</div></div>
-      <div class="card"><div class="k">Total building SF</div><div class="v">${IDMT.fmt.int(totals.sf)}</div><div class="s">square feet tracked</div></div>
-      <div class="card"><div class="k">Avg occupancy</div><div class="v">${IDMT.fmt.pct(totals.avgOcc)}</div><div class="s">weighted by property</div></div>
-      <div class="card"><div class="k">Avg asking rent</div><div class="v">${totals.avgRent === null ? '—' : IDMT.fmt.usd(totals.avgRent)}</div><div class="s">per SF</div></div>
-      <div class="card"><div class="k">Submarkets</div><div class="v">${IDMT.fmt.int(totals.submarkets)}</div><div class="s">with mapped properties</div></div>`;
+  function shortMoney(v) {
+    if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return '$' + Math.round(v / 1e3) + 'K';
+    return '$' + Math.round(v);
   }
+
+  function shortNum(v) {
+    if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return Math.round(v / 1e3) + 'K';
+    return String(Math.round(v));
+  }
+
+  /* ---------- sub-tab bar ---------- */
+
+  function renderModuleTabs() {
+    const el = document.getElementById('db-module-tabs');
+    const names = ['Overview', ...Object.keys(IDMT.config.modules || {})];
+    el.innerHTML = names.map((n) => `<button class="chip module ${activeModule === n ? 'active' : ''}" data-mod="${esc(n)}">${esc(n)}</button>`).join('');
+    el.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => { activeModule = chip.dataset.mod; render(); });
+    });
+  }
+
+  /* ---------- type chips ---------- */
 
   function renderTypeFilter() {
     const el = document.getElementById('db-type-filter');
@@ -107,7 +129,38 @@ IDMT.database = (function () {
     });
   }
 
-  function renderTable(rows) {
+  /* ---------- overview (original dashboard) ---------- */
+
+  function renderOverview() {
+    const { rows, totals, typeMix } = IDMT.aggregate();
+    const nf = IDMT.filterEngine.activeCount();
+    const body = document.getElementById('db-module-body');
+    body.innerHTML = `
+      <div class="cards">
+        <div class="card"><div class="k">Properties</div><div class="v">${IDMT.fmt.int(totals.count)}</div><div class="s">${nf ? nf + ' filter' + (nf === 1 ? '' : 's') + ' applied' : 'all properties'}</div></div>
+        <div class="card"><div class="k">Total building SF</div><div class="v">${IDMT.fmt.int(totals.sf)}</div><div class="s">square feet tracked</div></div>
+        <div class="card"><div class="k">Avg occupancy</div><div class="v">${IDMT.fmt.pct(totals.avgOcc)}</div><div class="s">weighted by property</div></div>
+        <div class="card"><div class="k">Avg asking rent</div><div class="v">${totals.avgRent === null ? '—' : IDMT.fmt.usd(totals.avgRent)}</div><div class="s">per SF</div></div>
+        <div class="card"><div class="k">Submarkets</div><div class="v">${IDMT.fmt.int(totals.submarkets)}</div><div class="s">with mapped properties</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Building SF by submarket</h3><div class="chart-wrap"><canvas id="chart-sf"></canvas></div></div>
+        <div class="chart-card"><h3>Property type mix</h3><div class="chart-wrap"><canvas id="chart-mix"></canvas></div></div>
+        <div class="chart-card"><h3>Avg asking rent by submarket ($/SF)</h3><div class="chart-wrap"><canvas id="chart-rent"></canvas></div></div>
+        <div class="chart-card"><h3>Avg occupancy by submarket (%)</h3><div class="chart-wrap"><canvas id="chart-occ"></canvas></div></div>
+      </div>
+      <div class="table-card">
+        <h3>Submarket summary</h3>
+        <div class="table-scroll"><table id="submarket-table"></table></div>
+      </div>`;
+
+    const named = rows.filter((r) => r.name !== 'Unassigned');
+    barChart('chart-sf', named.map((r) => r.name), named.map((r) => r.sf), '#3987e5', shortNum);
+    barChart('chart-rent', named.map((r) => r.name), named.map((r) => r.avgRent ?? 0), '#199e70', (v) => '$' + Number(v).toFixed(2));
+    barChart('chart-occ', named.map((r) => r.name), named.map((r) => r.avgOcc ?? 0), '#d95926', (v) => Math.round(v) + '%');
+    const mixTypes = Object.keys(typeMix);
+    doughnut('chart-mix', mixTypes, mixTypes.map((t) => typeMix[t]), mixTypes.map((t) => IDMT.typeColors[t] || '#898781'));
+
     const table = document.getElementById('submarket-table');
     table.innerHTML = `
       <thead><tr><th>Submarket</th><th>Properties</th><th>Building SF</th><th>Avg year built</th><th>Avg occupancy</th><th>Avg rent ($/SF)</th></tr></thead>
@@ -128,20 +181,63 @@ IDMT.database = (function () {
     });
   }
 
+  /* ---------- generic module (Leasing, Sales, Financing, …) ---------- */
+
+  function cellDisplay(p, col) {
+    const v = p[col];
+    if (v === null || v === undefined || String(v) === '') return '—';
+    const n = typeof v === 'number' ? v : null;
+    if (n !== null && /\$|Price|Amount|Budget|Spent/.test(col)) return shortMoney(n);
+    if (n !== null && Math.abs(n) >= 10000) return n.toLocaleString('en-US');
+    return esc(v);
+  }
+
+  function renderModule(name) {
+    const mod = (IDMT.config.modules || {})[name];
+    if (!mod) return renderOverview();
+    const { metrics, chart, rows, cols } = IDMT.moduleAggregate(mod);
+    const body = document.getElementById('db-module-body');
+
+    body.innerHTML = `
+      <div class="cards">
+        ${metrics.map((m) => `<div class="card"><div class="k">${esc(m.label)}</div><div class="v">${m.display}</div></div>`).join('')}
+      </div>
+      ${chart ? `<div class="charts-grid"><div class="chart-card wide"><h3>${esc(chart.label)}</h3><div class="chart-wrap"><canvas id="chart-module"></canvas></div></div></div>` : ''}
+      <div class="table-card">
+        <h3>${esc(name)} — property detail (${rows.length})</h3>
+        <div class="table-scroll"><table id="module-table"></table></div>
+      </div>`;
+
+    if (chart && chart.labels.length) {
+      const money = /\$|Price|Amount|Budget/.test(mod.chart.col);
+      barChart('chart-module', chart.labels, chart.values, '#3987e5', money ? shortMoney : shortNum);
+    }
+
+    const table = document.getElementById('module-table');
+    table.innerHTML = `
+      <thead><tr><th>Property</th><th>Submarket</th>${cols.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map((p) => `
+        <tr data-id="${esc(p._id)}">
+          <td><span style="color:${IDMT.typeColors[p._type] || '#898781'}">●</span> ${esc(p._name)}</td>
+          <td>${esc(p._submarket || '—')}</td>
+          ${cols.map((c) => `<td>${cellDisplay(p, c)}</td>`).join('')}
+        </tr>`).join('')}</tbody>`;
+    table.querySelectorAll('tbody tr').forEach((tr) => {
+      tr.addEventListener('click', () => {
+        IDMT.app.switchView('map');
+        IDMT.map.focusProperty(tr.dataset.id);
+      });
+    });
+  }
+
   function render() {
     if (!IDMT.properties.length) return;
     chartDefaults();
-    const { rows, totals, typeMix } = IDMT.aggregate();
+    destroyAll();
     document.getElementById('db-title').textContent = IDMT.config.market.name + ' — Market Database';
+    renderModuleTabs();
     renderTypeFilter();
-    renderCards(totals);
-    const named = rows.filter((r) => r.name !== 'Unassigned');
-    barChart('chart-sf', named.map((r) => r.name), named.map((r) => r.sf), '#3987e5', (v) => (v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : Math.round(v / 1000) + 'K'));
-    barChart('chart-rent', named.map((r) => r.name), named.map((r) => r.avgRent ?? 0), '#199e70', (v) => '$' + Number(v).toFixed(2));
-    barChart('chart-occ', named.map((r) => r.name), named.map((r) => r.avgOcc ?? 0), '#d95926', (v) => Math.round(v) + '%');
-    const mixTypes = Object.keys(typeMix);
-    doughnut('chart-mix', mixTypes, mixTypes.map((t) => typeMix[t]), mixTypes.map((t) => IDMT.typeColors[t] || '#898781'));
-    renderTable(rows);
+    activeModule === 'Overview' ? renderOverview() : renderModule(activeModule);
   }
 
   return { render };

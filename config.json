@@ -17,9 +17,16 @@
     "sheet": "Properties"
   },
   "layers": {
-    "submarkets": [
-      "data/submarkets/msp_submarkets.kmz"
-    ],
+    "submarkets": {
+      "default": ["data/submarkets/msp_submarkets.kmz"],
+      "byType": {
+        "Office": [],
+        "Industrial": [],
+        "Retail": [],
+        "Multifamily": [],
+        "Land": []
+      }
+    },
     "parcels": [
       "data/parcels/sample_parcels.kmz"
     ]
@@ -33,6 +40,8 @@
     "lng": "Longitude",
     "type": "Property Type",
     "class": "Class",
+    "state": "State",
+    "county": "County",
     "submarket": "Submarket",
     "size": "Building SF",
     "yearBuilt": "Year Built",
@@ -46,6 +55,8 @@
       { "col": "Class", "kind": "multi" },
       { "col": "Submarket", "kind": "multi" },
       { "col": "City", "kind": "multi" },
+      { "col": "County", "kind": "multi" },
+      { "col": "State", "kind": "multi" },
       { "col": "Status", "kind": "multi" },
       { "col": "Tenancy", "kind": "multi" },
       { "col": "Owner Type", "kind": "multi" },
@@ -121,6 +132,69 @@
         { "col": "Topography", "kind": "multi" },
         { "col": "Proposed Use", "kind": "multi" }
       ]
+    }
+  },
+  "modules": {
+    "Capital Investment": {
+      "metrics": [
+        { "label": "CapEx budget", "col": "CapEx Budget ($)", "agg": "sum", "fmt": "usd0" },
+        { "label": "CapEx spent", "col": "CapEx Spent ($)", "agg": "sum", "fmt": "usd0" },
+        { "label": "Active projects", "col": "Capital Project", "agg": "count" },
+        { "label": "Avg budget / property", "col": "CapEx Budget ($)", "agg": "avg", "fmt": "usd0" }
+      ],
+      "chart": { "col": "CapEx Budget ($)", "agg": "sum", "label": "CapEx budget by submarket" },
+      "cols": ["Capital Project", "Capital Project Status", "CapEx Budget ($)", "CapEx Spent ($)", "Year Renovated"]
+    },
+    "Leasing": {
+      "metrics": [
+        { "label": "Available SF", "col": "Available SF", "agg": "sum", "fmt": "int" },
+        { "label": "Largest contiguous", "col": "Largest Contiguous SF", "agg": "max", "fmt": "int" },
+        { "label": "Avg WALT", "col": "WALT (yrs)", "agg": "avg", "fmt": "num" },
+        { "label": "Avg asking rent", "col": "Asking Rent ($/SF)", "agg": "avg", "fmt": "usd" }
+      ],
+      "chart": { "col": "Available SF", "agg": "sum", "label": "Available SF by submarket" },
+      "cols": ["Available SF", "Largest Contiguous SF", "WALT (yrs)", "# Tenants", "Asking Rent ($/SF)", "Rent Basis", "Occupancy %"]
+    },
+    "Development": {
+      "metrics": [
+        { "label": "Projects in pipeline", "col": "Developer", "agg": "count" },
+        { "label": "Pipeline SF", "col": "Building SF", "agg": "sum", "fmt": "int", "where": { "col": "Status", "in": ["Under Construction", "Proposed"] } },
+        { "label": "Under construction", "col": "Status", "agg": "countValue", "value": "Under Construction" },
+        { "label": "Proposed", "col": "Status", "agg": "countValue", "value": "Proposed" }
+      ],
+      "chart": { "col": "Building SF", "agg": "sum", "label": "Pipeline SF by submarket", "where": { "col": "Status", "in": ["Under Construction", "Proposed"] } },
+      "cols": ["Status", "Developer", "Construction Start", "Est. Delivery", "Building SF", "Land Acres"],
+      "rowFilter": { "col": "Status", "in": ["Under Construction", "Proposed"] }
+    },
+    "Renovations": {
+      "metrics": [
+        { "label": "Renovated properties", "col": "Year Renovated", "agg": "count" },
+        { "label": "Renovation spend", "col": "Renovation Budget ($)", "agg": "sum", "fmt": "usd0" },
+        { "label": "Avg renovation year", "col": "Year Renovated", "agg": "avg", "fmt": "year" }
+      ],
+      "chart": { "col": "Renovation Budget ($)", "agg": "sum", "label": "Renovation spend by submarket" },
+      "cols": ["Year Renovated", "Renovation Budget ($)", "Renovation Scope", "Year Built", "Class"],
+      "rowFilter": { "col": "Year Renovated", "nonEmpty": true }
+    },
+    "Sales": {
+      "metrics": [
+        { "label": "Total sale volume", "col": "Last Sale Price", "agg": "sum", "fmt": "usd0" },
+        { "label": "Avg price/SF", "col": "Price/SF", "agg": "avg", "fmt": "usd" },
+        { "label": "Avg cap rate", "col": "Cap Rate (%)", "agg": "avg", "fmt": "pct" },
+        { "label": "Trades recorded", "col": "Last Sale Price", "agg": "count" }
+      ],
+      "chart": { "col": "Last Sale Price", "agg": "sum", "label": "Sale volume by submarket" },
+      "cols": ["Last Sale Price", "Last Sale Date", "Price/SF", "Cap Rate (%)", "Buyer", "Seller"]
+    },
+    "Financing": {
+      "metrics": [
+        { "label": "Total debt", "col": "Loan Amount ($)", "agg": "sum", "fmt": "usd0" },
+        { "label": "Avg rate", "col": "Interest Rate (%)", "agg": "avg", "fmt": "pct" },
+        { "label": "Avg LTV", "col": "LTV (%)", "agg": "avg", "fmt": "pct" },
+        { "label": "Loans on file", "col": "Loan Amount ($)", "agg": "count" }
+      ],
+      "chart": { "col": "Loan Amount ($)", "agg": "sum", "label": "Debt by submarket" },
+      "cols": ["Lender", "Loan Amount ($)", "Interest Rate (%)", "Loan Maturity", "LTV (%)"]
     }
   },
   "basemap": {

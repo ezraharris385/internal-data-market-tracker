@@ -176,6 +176,44 @@ body {
 .f-chip.active { color: #fff; background: var(--accent); border-color: var(--accent); }
 .f-more { font-size: 11px; color: var(--text-muted); align-self: center; }
 
+/* tab-level search (Properties + Market Database) */
+.tab-search { position: relative; min-width: 300px; flex: 1; max-width: 430px; }
+.search-box.slim { padding: 7px 13px; border-radius: 10px; box-shadow: none; background: var(--surface-1); border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.search-box.slim:focus-within { border-color: var(--accent); }
+.search-box.slim input { flex: 1; background: none; border: none; outline: none; color: var(--text-primary); font: inherit; font-size: 13px; }
+.search-box.slim input::placeholder { color: var(--text-muted); }
+.tab-search .search-suggestions { position: absolute; left: 0; right: 0; top: 100%; z-index: 40; }
+.s-recent-head { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); padding: 8px 14px 2px; }
+
+/* database module sub-tabs */
+.module-tabs { border-top: 1px solid var(--grid); padding-top: 12px; }
+.chip.module { border-radius: 8px; }
+.chart-card.wide { grid-column: 1 / -1; }
+
+/* detail edit mode + notes */
+.detail-actions.top { margin: 0 0 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn-ghost.sm, .btn-primary.sm { width: auto; display: inline-block; margin-top: 0; padding: 5px 11px; font-size: 12px; }
+.btn-primary.sm { border: none; }
+.upload-label { cursor: pointer; }
+.edit-hint { font-size: 11.5px; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--grid); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+.edit-hint code { background: var(--page); padding: 1px 4px; border-radius: 4px; }
+.edit-image-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.edit-image-row .edit-field { flex: 1; }
+.edit-field {
+  width: 100%; font: inherit; font-size: 12px; color: var(--text-primary);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 8px; outline: none;
+}
+.edit-field:focus { border-color: var(--accent); }
+.notes-pad {
+  width: 100%; min-height: 74px; resize: vertical;
+  font: inherit; font-size: 12.5px; color: var(--text-primary);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; outline: none; margin-bottom: 6px;
+}
+.notes-pad:focus { border-color: var(--accent); }
+.notes-status { font-size: 11.5px; color: #0ca30c; margin-left: 8px; }
+
 /* presentation mode — clean frame for screen recording */
 body.presentation .topbar,
 body.presentation .layers-panel,
