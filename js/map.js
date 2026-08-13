@@ -57,6 +57,7 @@ IDMT.map = (function () {
       styleReady = true;
       addSatellite();
       addBuildings();
+      addParcelTiles();
       addBoundaryLayers();
       addPropertyLayers();
       wireInteractions();
@@ -147,6 +148,74 @@ IDMT.map = (function () {
       if (t < 1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+  }
+
+  /* ---------- metro-wide parcel fabric (PMTiles vector tiles, streamed by viewport) ---------- */
+
+  function addParcelTiles() {
+    const cfg = IDMT.config.layers.parcelTiles;
+    if (!cfg || typeof pmtiles === 'undefined') return;
+    const files = cfg.files || (cfg.url ? [cfg.url] : []);
+    if (!files.length) return;
+    if (!IDMT._pmtilesProtocol) {
+      IDMT._pmtilesProtocol = new pmtiles.Protocol();
+      maplibregl.addProtocol('pmtiles', IDMT._pmtilesProtocol.tile);
+    }
+    const srcLayer = cfg.sourceLayer || 'parcels';
+    const minzoom = cfg.minzoom || 13;
+    IDMT._parcelTileLayerIds = [];
+    files.forEach((url, i) => {
+      const abs = url.startsWith('http') ? url : new URL(url, window.location.href).href;
+      const srcId = 'idmt-parcel-tiles-' + i;
+      map.addSource(srcId, {
+        type: 'vector',
+        url: 'pmtiles://' + abs,
+        attribution: i === 0 ? (cfg.attribution || '') : '',
+      });
+      map.addLayer({
+        id: srcId + '-fill', type: 'fill', source: srcId, 'source-layer': srcLayer,
+        minzoom,
+        paint: { 'fill-color': '#c98500', 'fill-opacity': 0.04 },
+      }, firstSymbolLayerId());
+      map.addLayer({
+        id: srcId + '-line', type: 'line', source: srcId, 'source-layer': srcLayer,
+        minzoom,
+        paint: {
+          'line-color': '#a08c5a',
+          'line-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0.35, 16, 0.8],
+          'line-width': ['interpolate', ['linear'], ['zoom'], minzoom, 0.4, 17, 1.4],
+        },
+      }, firstSymbolLayerId());
+      IDMT._parcelTileLayerIds.push(srcId + '-fill', srcId + '-line');
+      map.on('click', srcId + '-fill', onParcelClick);
+      map.on('mouseenter', srcId + '-fill', () => { if (map.getZoom() >= minzoom) map.getCanvas().style.cursor = 'crosshair'; });
+      map.on('mouseleave', srcId + '-fill', () => { map.getCanvas().style.cursor = ''; });
+    });
+    map.on('error', (e) => {
+      if (String(e.sourceId || '').startsWith('idmt-parcel-tiles') && !IDMT._parcelTileErrorShown) {
+        IDMT._parcelTileErrorShown = true;
+        console.warn('Metro parcel tiles unavailable:', e.error && e.error.message);
+      }
+    });
+
+    function onParcelClick(e) {
+      // a click on one of OUR properties wins over the parcel underneath it
+      if (map.queryRenderedFeatures(e.point, { layers: ['idmt-properties-pt'] }).length) return;
+      const p = e.features[0].properties;
+      const money = (v) => (v === undefined || v === null || v === '' || isNaN(+v) ? null : '$' + Math.round(+v).toLocaleString('en-US'));
+      const rows = [
+        ['Owner', p.OWNER_NAME], ['PIN', p.PIN], ['City', p.CTU_NAME], ['County', p.CO_NAME],
+        ['Use', p.USECLASS1], ['EMV', money(p.EMV_TOTAL)], ['Acres', p.ACRES_POLY],
+        ['Year built', p.YEAR_BUILT || null],
+        ['Last sale', p.SALE_VALUE ? `${money(p.SALE_VALUE)}${p.SALE_YR ? ' (' + p.SALE_YR + ')' : ''}` : null],
+      ].filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== '');
+      hoverPopup.remove();
+      new maplibregl.Popup({ offset: 8, maxWidth: '300px' })
+        .setLngLat(e.lngLat)
+        .setHTML(`<div class="popup-name">Parcel record</div>` +
+          rows.map(([k, v]) => `<div class="popup-sub"><b>${k}:</b> ${esc(v)}</div>`).join(''))
+        .addTo(map);
+    }
   }
 
   /* ---------- boundaries ---------- */
@@ -298,7 +367,8 @@ IDMT.map = (function () {
     document.getElementById(id).addEventListener('change', (e) => {
       if (!styleReady) return;
       const vis = e.target.checked ? 'visible' : 'none';
-      layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', vis));
+      const list = typeof layers === 'function' ? layers() : layers;
+      list.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', vis));
     });
   }
 
@@ -307,6 +377,7 @@ IDMT.map = (function () {
     toggle('lyr-submarkets', ['idmt-submarkets-fill', 'idmt-submarkets-line', 'idmt-submarkets-highlight']);
     toggle('lyr-submarket-labels', ['idmt-submarket-labels']);
     toggle('lyr-parcels', ['idmt-parcels-fill', 'idmt-parcels-line']);
+    toggle('lyr-parcel-tiles', () => IDMT._parcelTileLayerIds || []);
     toggle('lyr-properties', ['idmt-properties-pt', 'idmt-properties-halo', 'idmt-selected']);
     toggle('lyr-satellite', ['idmt-satellite']);
 

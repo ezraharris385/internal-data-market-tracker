@@ -29,6 +29,10 @@ Built as a zero-backend static site (GitHub Pages). Currently configured for the
 
 Leave `Submarket` blank to let the platform assign it from your submarket KMZ polygons; fill it in to override.
 
+### Metro-wide parcel fabric (PMTiles)
+
+`data/parcels/msp_parcels.pmtiles` holds **every parcel in the 7-county Twin Cities metro** (~1.09M polygons from the open MetroGIS Regional Parcel Dataset) as vector tiles the map streams by viewport — zoom past ~z13 and the full parcel fabric appears; click any parcel for owner, PIN, use class, EMV, acreage, and last sale. Toggle: *All parcels (metro)*. To retarget another market: convert any parcel GPKG/shapefile with tippecanoe to a PMTiles under GitHub's 100 MB file limit and point `config.json → layers.parcelTiles` at it.
+
 ### Boundaries (KMZ / shapefile / GeoJSON)
 
 - **Submarkets:** drop files into `data/submarkets/` and list them in `config.json → layers.submarkets`. Polygon `name` becomes the submarket name.

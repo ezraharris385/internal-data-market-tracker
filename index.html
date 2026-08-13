@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=0.5" />
+  <link rel="stylesheet" href="css/styles.css?v=0.6" />
 </head>
 <body>
   <header class="topbar">
@@ -50,6 +50,7 @@
       <label class="layer-row"><input type="checkbox" id="lyr-submarkets" checked /> Submarket boundaries</label>
       <label class="layer-row"><input type="checkbox" id="lyr-submarket-labels" checked /> Submarket labels</label>
       <label class="layer-row"><input type="checkbox" id="lyr-parcels" checked /> Property boundaries</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-parcel-tiles" checked /> All parcels (metro)</label>
       <label class="layer-row"><input type="checkbox" id="lyr-properties" checked /> Properties</label>
       <label class="layer-row"><input type="checkbox" id="lyr-satellite" /> Satellite imagery</label>
       <div class="layers-divider"></div>
@@ -134,14 +135,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
+  <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=0.5"></script>
-  <script src="js/filters.js?v=0.5"></script>
-  <script src="js/search.js?v=0.5"></script>
-  <script src="js/map.js?v=0.5"></script>
-  <script src="js/detail.js?v=0.5"></script>
-  <script src="js/database.js?v=0.5"></script>
-  <script src="js/properties.js?v=0.5"></script>
-  <script src="js/app.js?v=0.5"></script>
+  <script src="js/data.js?v=0.6"></script>
+  <script src="js/filters.js?v=0.6"></script>
+  <script src="js/search.js?v=0.6"></script>
+  <script src="js/map.js?v=0.6"></script>
+  <script src="js/detail.js?v=0.6"></script>
+  <script src="js/database.js?v=0.6"></script>
+  <script src="js/properties.js?v=0.6"></script>
+  <script src="js/app.js?v=0.6"></script>
 </body>
 </html>

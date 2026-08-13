@@ -56,7 +56,16 @@
     },
     "parcels": [
       "data/parcels/msp_parcels.geojson"
-    ]
+    ],
+    "parcelTiles": {
+      "files": [
+        "data/parcels/msp_parcels_west.pmtiles",
+        "data/parcels/msp_parcels_east.pmtiles"
+      ],
+      "sourceLayer": "parcels",
+      "minzoom": 13,
+      "attribution": "Parcels: MetroGIS Regional Parcel Dataset (open data)"
+    }
   },
   "fields": {
     "id": "Property ID",
