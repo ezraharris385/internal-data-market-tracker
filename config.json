@@ -2,7 +2,10 @@
   "market": {
     "name": "Minneapolis–St. Paul MSA",
     "shortName": "MSP",
-    "center": [-93.2277, 44.9635],
+    "center": [
+      -93.2277,
+      44.9635
+    ],
     "zoom": 10.3,
     "pitch": 50,
     "bearing": -12,
@@ -52,7 +55,7 @@
       }
     },
     "parcels": [
-      "data/parcels/sample_parcels.kmz"
+      "data/parcels/msp_parcels.geojson"
     ]
   },
   "fields": {
@@ -73,152 +76,695 @@
     "rent": "Asking Rent ($/SF)",
     "image": "Image URL"
   },
-  "typeOrder": ["Office", "Industrial", "Retail", "Multifamily", "Land", "Other"],
+  "typeOrder": [
+    "Office",
+    "Industrial",
+    "Retail",
+    "Multifamily",
+    "Land",
+    "Other"
+  ],
   "schema": {
     "universal": [
-      { "col": "Class", "kind": "multi" },
-      { "col": "Submarket", "kind": "multi" },
-      { "col": "City", "kind": "multi" },
-      { "col": "County", "kind": "multi" },
-      { "col": "State", "kind": "multi" },
-      { "col": "Status", "kind": "multi" },
-      { "col": "Tenancy", "kind": "multi" },
-      { "col": "Owner Type", "kind": "multi" },
-      { "col": "Rent Basis", "kind": "multi" },
-      { "col": "Zoning", "kind": "multi" },
-      { "col": "Building SF", "kind": "range" },
-      { "col": "Land Acres", "kind": "range" },
-      { "col": "Year Built", "kind": "range" },
-      { "col": "Year Renovated", "kind": "range" },
-      { "col": "Stories", "kind": "range" },
-      { "col": "Occupancy %", "kind": "range" },
-      { "col": "Asking Rent ($/SF)", "kind": "range" },
-      { "col": "Cap Rate (%)", "kind": "range" },
-      { "col": "Last Sale Price", "kind": "range" },
-      { "col": "Price/SF", "kind": "range" },
-      { "col": "Parking Ratio (/1000 SF)", "kind": "range" }
+      {
+        "col": "Class",
+        "kind": "multi"
+      },
+      {
+        "col": "Submarket",
+        "kind": "multi"
+      },
+      {
+        "col": "City",
+        "kind": "multi"
+      },
+      {
+        "col": "County",
+        "kind": "multi"
+      },
+      {
+        "col": "State",
+        "kind": "multi"
+      },
+      {
+        "col": "Status",
+        "kind": "multi"
+      },
+      {
+        "col": "Tenancy",
+        "kind": "multi"
+      },
+      {
+        "col": "Owner Type",
+        "kind": "multi"
+      },
+      {
+        "col": "Rent Basis",
+        "kind": "multi"
+      },
+      {
+        "col": "Zoning",
+        "kind": "multi"
+      },
+      {
+        "col": "Building SF",
+        "kind": "range"
+      },
+      {
+        "col": "Land Acres",
+        "kind": "range"
+      },
+      {
+        "col": "Year Built",
+        "kind": "range"
+      },
+      {
+        "col": "Year Renovated",
+        "kind": "range"
+      },
+      {
+        "col": "Stories",
+        "kind": "range"
+      },
+      {
+        "col": "Occupancy %",
+        "kind": "range"
+      },
+      {
+        "col": "Asking Rent ($/SF)",
+        "kind": "range"
+      },
+      {
+        "col": "Cap Rate (%)",
+        "kind": "range"
+      },
+      {
+        "col": "Last Sale Price",
+        "kind": "range"
+      },
+      {
+        "col": "Price/SF",
+        "kind": "range"
+      },
+      {
+        "col": "Parking Ratio (/1000 SF)",
+        "kind": "range"
+      },
+      {
+        "col": "NOI ($)",
+        "kind": "range"
+      },
+      {
+        "col": "In-Place Rent ($/SF)",
+        "kind": "range"
+      },
+      {
+        "col": "WALT (yrs)",
+        "kind": "range"
+      },
+      {
+        "col": "Escalations (%/yr)",
+        "kind": "range"
+      },
+      {
+        "col": "Interest Rate (%)",
+        "kind": "range"
+      },
+      {
+        "col": "LTV (%)",
+        "kind": "range"
+      },
+      {
+        "col": "DSCR",
+        "kind": "range"
+      },
+      {
+        "col": "Debt Yield (%)",
+        "kind": "range"
+      },
+      {
+        "col": "Loan Type",
+        "kind": "multi"
+      },
+      {
+        "col": "Lender",
+        "kind": "multi"
+      },
+      {
+        "col": "Recourse",
+        "kind": "multi"
+      },
+      {
+        "col": "JV Partner",
+        "kind": "multi"
+      }
     ],
     "byType": {
       "Office": [
-        { "col": "Typical Floor SF", "kind": "range" },
-        { "col": "Elevators", "kind": "range" },
-        { "col": "Skyway Connected", "kind": "multi" },
-        { "col": "LEED Certification", "kind": "multi" },
-        { "col": "Anchor Tenant", "kind": "multi" },
-        { "col": "Sublease SF", "kind": "range" },
-        { "col": "Amenity Score (1-10)", "kind": "range" },
-        { "col": "Conference Center", "kind": "multi" },
-        { "col": "Fitness Center", "kind": "multi" },
-        { "col": "Parking Type", "kind": "multi" }
+        {
+          "col": "Typical Floor SF",
+          "kind": "range"
+        },
+        {
+          "col": "Elevators",
+          "kind": "range"
+        },
+        {
+          "col": "Skyway Connected",
+          "kind": "multi"
+        },
+        {
+          "col": "LEED Certification",
+          "kind": "multi"
+        },
+        {
+          "col": "Anchor Tenant",
+          "kind": "multi"
+        },
+        {
+          "col": "Sublease SF",
+          "kind": "range"
+        },
+        {
+          "col": "Amenity Score (1-10)",
+          "kind": "range"
+        },
+        {
+          "col": "Conference Center",
+          "kind": "multi"
+        },
+        {
+          "col": "Fitness Center",
+          "kind": "multi"
+        },
+        {
+          "col": "Parking Type",
+          "kind": "multi"
+        }
       ],
       "Industrial": [
-        { "col": "Clear Height (ft)", "kind": "range" },
-        { "col": "Dock Doors", "kind": "range" },
-        { "col": "Drive-In Doors", "kind": "range" },
-        { "col": "Power (Amps)", "kind": "range" },
-        { "col": "Rail Served", "kind": "multi" },
-        { "col": "Office Finish %", "kind": "range" },
-        { "col": "Trailer Stalls", "kind": "range" },
-        { "col": "Sprinkler System", "kind": "multi" },
-        { "col": "Cross-Dock", "kind": "multi" },
-        { "col": "Truck Court Depth (ft)", "kind": "range" }
+        {
+          "col": "Clear Height (ft)",
+          "kind": "range"
+        },
+        {
+          "col": "Dock Doors",
+          "kind": "range"
+        },
+        {
+          "col": "Drive-In Doors",
+          "kind": "range"
+        },
+        {
+          "col": "Power (Amps)",
+          "kind": "range"
+        },
+        {
+          "col": "Rail Served",
+          "kind": "multi"
+        },
+        {
+          "col": "Office Finish %",
+          "kind": "range"
+        },
+        {
+          "col": "Trailer Stalls",
+          "kind": "range"
+        },
+        {
+          "col": "Sprinkler System",
+          "kind": "multi"
+        },
+        {
+          "col": "Cross-Dock",
+          "kind": "multi"
+        },
+        {
+          "col": "Truck Court Depth (ft)",
+          "kind": "range"
+        }
       ],
       "Retail": [
-        { "col": "Center Type", "kind": "multi" },
-        { "col": "Anchor Tenant", "kind": "multi" },
-        { "col": "Traffic Count (VPD)", "kind": "range" },
-        { "col": "Frontage (ft)", "kind": "range" },
-        { "col": "Pad Sites", "kind": "range" },
-        { "col": "Drive-Thru", "kind": "multi" },
-        { "col": "Signalized Corner", "kind": "multi" },
-        { "col": "In-Line SF", "kind": "range" },
-        { "col": "Parking Spaces", "kind": "range" },
-        { "col": "Grocery Anchored", "kind": "multi" }
+        {
+          "col": "Center Type",
+          "kind": "multi"
+        },
+        {
+          "col": "Anchor Tenant",
+          "kind": "multi"
+        },
+        {
+          "col": "Traffic Count (VPD)",
+          "kind": "range"
+        },
+        {
+          "col": "Frontage (ft)",
+          "kind": "range"
+        },
+        {
+          "col": "Pad Sites",
+          "kind": "range"
+        },
+        {
+          "col": "Drive-Thru",
+          "kind": "multi"
+        },
+        {
+          "col": "Signalized Corner",
+          "kind": "multi"
+        },
+        {
+          "col": "In-Line SF",
+          "kind": "range"
+        },
+        {
+          "col": "Parking Spaces",
+          "kind": "range"
+        },
+        {
+          "col": "Grocery Anchored",
+          "kind": "multi"
+        }
       ],
       "Multifamily": [
-        { "col": "Units", "kind": "range" },
-        { "col": "Avg Unit SF", "kind": "range" },
-        { "col": "Avg Rent/Unit", "kind": "range" },
-        { "col": "Style", "kind": "multi" },
-        { "col": "Studio %", "kind": "range" },
-        { "col": "1BR %", "kind": "range" },
-        { "col": "2BR %", "kind": "range" },
-        { "col": "3BR %", "kind": "range" },
-        { "col": "Affordability", "kind": "multi" },
-        { "col": "Pool", "kind": "multi" },
-        { "col": "In-Unit Laundry", "kind": "multi" }
+        {
+          "col": "Units",
+          "kind": "range"
+        },
+        {
+          "col": "Avg Unit SF",
+          "kind": "range"
+        },
+        {
+          "col": "Avg Rent/Unit",
+          "kind": "range"
+        },
+        {
+          "col": "Style",
+          "kind": "multi"
+        },
+        {
+          "col": "Studio %",
+          "kind": "range"
+        },
+        {
+          "col": "1BR %",
+          "kind": "range"
+        },
+        {
+          "col": "2BR %",
+          "kind": "range"
+        },
+        {
+          "col": "3BR %",
+          "kind": "range"
+        },
+        {
+          "col": "Affordability",
+          "kind": "multi"
+        },
+        {
+          "col": "Pool",
+          "kind": "multi"
+        },
+        {
+          "col": "In-Unit Laundry",
+          "kind": "multi"
+        }
       ],
       "Land": [
-        { "col": "Utilities to Site", "kind": "multi" },
-        { "col": "Entitled", "kind": "multi" },
-        { "col": "Corner Parcel", "kind": "multi" },
-        { "col": "Frontage (ft)", "kind": "range" },
-        { "col": "Topography", "kind": "multi" },
-        { "col": "Proposed Use", "kind": "multi" }
+        {
+          "col": "Utilities to Site",
+          "kind": "multi"
+        },
+        {
+          "col": "Entitled",
+          "kind": "multi"
+        },
+        {
+          "col": "Corner Parcel",
+          "kind": "multi"
+        },
+        {
+          "col": "Frontage (ft)",
+          "kind": "range"
+        },
+        {
+          "col": "Topography",
+          "kind": "multi"
+        },
+        {
+          "col": "Proposed Use",
+          "kind": "multi"
+        }
       ]
     }
   },
   "modules": {
     "Capital Investment": {
       "metrics": [
-        { "label": "CapEx budget", "col": "CapEx Budget ($)", "agg": "sum", "fmt": "usd0" },
-        { "label": "CapEx spent", "col": "CapEx Spent ($)", "agg": "sum", "fmt": "usd0" },
-        { "label": "Active projects", "col": "Capital Project", "agg": "count" },
-        { "label": "Avg budget / property", "col": "CapEx Budget ($)", "agg": "avg", "fmt": "usd0" }
+        {
+          "label": "CapEx budget",
+          "col": "CapEx Budget ($)",
+          "agg": "sum",
+          "fmt": "usd0"
+        },
+        {
+          "label": "CapEx spent",
+          "col": "CapEx Spent ($)",
+          "agg": "sum",
+          "fmt": "usd0"
+        },
+        {
+          "label": "Active projects",
+          "col": "Capital Project",
+          "agg": "count"
+        },
+        {
+          "label": "Avg budget / property",
+          "col": "CapEx Budget ($)",
+          "agg": "avg",
+          "fmt": "usd0"
+        }
       ],
-      "chart": { "col": "CapEx Budget ($)", "agg": "sum", "label": "CapEx budget by submarket" },
-      "cols": ["Capital Project", "Capital Project Status", "CapEx Budget ($)", "CapEx Spent ($)", "Year Renovated"]
+      "chart": {
+        "col": "CapEx Budget ($)",
+        "agg": "sum",
+        "label": "CapEx budget by submarket"
+      },
+      "cols": [
+        "Capital Project",
+        "Capital Project Status",
+        "CapEx Budget ($)",
+        "CapEx Spent ($)",
+        "Year Renovated"
+      ]
     },
     "Leasing": {
       "metrics": [
-        { "label": "Available SF", "col": "Available SF", "agg": "sum", "fmt": "int" },
-        { "label": "Largest contiguous", "col": "Largest Contiguous SF", "agg": "max", "fmt": "int" },
-        { "label": "Avg WALT", "col": "WALT (yrs)", "agg": "avg", "fmt": "num" },
-        { "label": "Avg asking rent", "col": "Asking Rent ($/SF)", "agg": "avg", "fmt": "usd" }
+        {
+          "label": "Available SF",
+          "col": "Available SF",
+          "agg": "sum",
+          "fmt": "int"
+        },
+        {
+          "label": "Largest contiguous",
+          "col": "Largest Contiguous SF",
+          "agg": "max",
+          "fmt": "int"
+        },
+        {
+          "label": "Avg WALT",
+          "col": "WALT (yrs)",
+          "agg": "avg",
+          "fmt": "num"
+        },
+        {
+          "label": "Avg asking rent",
+          "col": "Asking Rent ($/SF)",
+          "agg": "avg",
+          "fmt": "usd"
+        },
+        {
+          "label": "Avg escalations",
+          "col": "Escalations (%/yr)",
+          "agg": "avg",
+          "fmt": "pct"
+        },
+        {
+          "label": "Avg TI allowance",
+          "col": "TI Allowance ($/SF)",
+          "agg": "avg",
+          "fmt": "usd"
+        }
       ],
-      "chart": { "col": "Available SF", "agg": "sum", "label": "Available SF by submarket" },
-      "cols": ["Available SF", "Largest Contiguous SF", "WALT (yrs)", "# Tenants", "Asking Rent ($/SF)", "Rent Basis", "Occupancy %"]
+      "chart": {
+        "col": "Available SF",
+        "agg": "sum",
+        "label": "Available SF by submarket"
+      },
+      "cols": [
+        "Available SF",
+        "Largest Contiguous SF",
+        "WALT (yrs)",
+        "# Tenants",
+        "Asking Rent ($/SF)",
+        "Rent Basis",
+        "Avg Lease Term (yrs)",
+        "Escalations (%/yr)",
+        "TI Allowance ($/SF)",
+        "Free Rent (mos)",
+        "Renewal Options",
+        "Largest Tenant",
+        "Largest Tenant SF",
+        "Next Major Expiry",
+        "Occupancy %"
+      ]
+    },
+    "Operations": {
+      "metrics": [
+        {
+          "label": "Total NOI",
+          "col": "NOI ($)",
+          "agg": "sum",
+          "fmt": "usd0"
+        },
+        {
+          "label": "Avg in-place rent",
+          "col": "In-Place Rent ($/SF)",
+          "agg": "avg",
+          "fmt": "usd"
+        },
+        {
+          "label": "Avg OpEx",
+          "col": "OpEx ($/SF)",
+          "agg": "avg",
+          "fmt": "usd"
+        },
+        {
+          "label": "Avg RE taxes",
+          "col": "RE Taxes ($/SF)",
+          "agg": "avg",
+          "fmt": "usd"
+        }
+      ],
+      "chart": {
+        "col": "NOI ($)",
+        "agg": "sum",
+        "label": "NOI by submarket"
+      },
+      "cols": [
+        "NOI ($)",
+        "In-Place Rent ($/SF)",
+        "Asking Rent ($/SF)",
+        "OpEx ($/SF)",
+        "RE Taxes ($/SF)",
+        "Insurance ($/SF)",
+        "Occupancy %"
+      ]
     },
     "Development": {
       "metrics": [
-        { "label": "Projects in pipeline", "col": "Developer", "agg": "count" },
-        { "label": "Pipeline SF", "col": "Building SF", "agg": "sum", "fmt": "int", "where": { "col": "Status", "in": ["Under Construction", "Proposed"] } },
-        { "label": "Under construction", "col": "Status", "agg": "countValue", "value": "Under Construction" },
-        { "label": "Proposed", "col": "Status", "agg": "countValue", "value": "Proposed" }
+        {
+          "label": "Projects in pipeline",
+          "col": "Developer",
+          "agg": "count"
+        },
+        {
+          "label": "Pipeline SF",
+          "col": "Building SF",
+          "agg": "sum",
+          "fmt": "int",
+          "where": {
+            "col": "Status",
+            "in": [
+              "Under Construction",
+              "Proposed"
+            ]
+          }
+        },
+        {
+          "label": "Under construction",
+          "col": "Status",
+          "agg": "countValue",
+          "value": "Under Construction"
+        },
+        {
+          "label": "Proposed",
+          "col": "Status",
+          "agg": "countValue",
+          "value": "Proposed"
+        }
       ],
-      "chart": { "col": "Building SF", "agg": "sum", "label": "Pipeline SF by submarket", "where": { "col": "Status", "in": ["Under Construction", "Proposed"] } },
-      "cols": ["Status", "Developer", "Construction Start", "Est. Delivery", "Building SF", "Land Acres"],
-      "rowFilter": { "col": "Status", "in": ["Under Construction", "Proposed"] }
+      "chart": {
+        "col": "Building SF",
+        "agg": "sum",
+        "label": "Pipeline SF by submarket",
+        "where": {
+          "col": "Status",
+          "in": [
+            "Under Construction",
+            "Proposed"
+          ]
+        }
+      },
+      "cols": [
+        "Status",
+        "Developer",
+        "Construction Start",
+        "Est. Delivery",
+        "Building SF",
+        "Land Acres"
+      ],
+      "rowFilter": {
+        "col": "Status",
+        "in": [
+          "Under Construction",
+          "Proposed"
+        ]
+      }
     },
     "Renovations": {
       "metrics": [
-        { "label": "Renovated properties", "col": "Year Renovated", "agg": "count" },
-        { "label": "Renovation spend", "col": "Renovation Budget ($)", "agg": "sum", "fmt": "usd0" },
-        { "label": "Avg renovation year", "col": "Year Renovated", "agg": "avg", "fmt": "year" }
+        {
+          "label": "Renovated properties",
+          "col": "Year Renovated",
+          "agg": "count"
+        },
+        {
+          "label": "Renovation spend",
+          "col": "Renovation Budget ($)",
+          "agg": "sum",
+          "fmt": "usd0"
+        },
+        {
+          "label": "Avg renovation year",
+          "col": "Year Renovated",
+          "agg": "avg",
+          "fmt": "year"
+        }
       ],
-      "chart": { "col": "Renovation Budget ($)", "agg": "sum", "label": "Renovation spend by submarket" },
-      "cols": ["Year Renovated", "Renovation Budget ($)", "Renovation Scope", "Year Built", "Class"],
-      "rowFilter": { "col": "Year Renovated", "nonEmpty": true }
+      "chart": {
+        "col": "Renovation Budget ($)",
+        "agg": "sum",
+        "label": "Renovation spend by submarket"
+      },
+      "cols": [
+        "Year Renovated",
+        "Renovation Budget ($)",
+        "Renovation Scope",
+        "Year Built",
+        "Class"
+      ],
+      "rowFilter": {
+        "col": "Year Renovated",
+        "nonEmpty": true
+      }
     },
     "Sales": {
       "metrics": [
-        { "label": "Total sale volume", "col": "Last Sale Price", "agg": "sum", "fmt": "usd0" },
-        { "label": "Avg price/SF", "col": "Price/SF", "agg": "avg", "fmt": "usd" },
-        { "label": "Avg cap rate", "col": "Cap Rate (%)", "agg": "avg", "fmt": "pct" },
-        { "label": "Trades recorded", "col": "Last Sale Price", "agg": "count" }
+        {
+          "label": "Total sale volume",
+          "col": "Last Sale Price",
+          "agg": "sum",
+          "fmt": "usd0"
+        },
+        {
+          "label": "Avg price/SF",
+          "col": "Price/SF",
+          "agg": "avg",
+          "fmt": "usd"
+        },
+        {
+          "label": "Avg cap rate",
+          "col": "Cap Rate (%)",
+          "agg": "avg",
+          "fmt": "pct"
+        },
+        {
+          "label": "Trades recorded",
+          "col": "Last Sale Price",
+          "agg": "count"
+        }
       ],
-      "chart": { "col": "Last Sale Price", "agg": "sum", "label": "Sale volume by submarket" },
-      "cols": ["Last Sale Price", "Last Sale Date", "Price/SF", "Cap Rate (%)", "Buyer", "Seller"]
+      "chart": {
+        "col": "Last Sale Price",
+        "agg": "sum",
+        "label": "Sale volume by submarket"
+      },
+      "cols": [
+        "Last Sale Price",
+        "Last Sale Date",
+        "Price/SF",
+        "Cap Rate (%)",
+        "Buyer",
+        "Seller",
+        "Total Basis ($)",
+        "JV Partner",
+        "Ownership %"
+      ]
     },
     "Financing": {
       "metrics": [
-        { "label": "Total debt", "col": "Loan Amount ($)", "agg": "sum", "fmt": "usd0" },
-        { "label": "Avg rate", "col": "Interest Rate (%)", "agg": "avg", "fmt": "pct" },
-        { "label": "Avg LTV", "col": "LTV (%)", "agg": "avg", "fmt": "pct" },
-        { "label": "Loans on file", "col": "Loan Amount ($)", "agg": "count" }
+        {
+          "label": "Total debt",
+          "col": "Loan Amount ($)",
+          "agg": "sum",
+          "fmt": "usd0"
+        },
+        {
+          "label": "Avg rate",
+          "col": "Interest Rate (%)",
+          "agg": "avg",
+          "fmt": "pct"
+        },
+        {
+          "label": "Avg LTV",
+          "col": "LTV (%)",
+          "agg": "avg",
+          "fmt": "pct"
+        },
+        {
+          "label": "Avg DSCR",
+          "col": "DSCR",
+          "agg": "avg",
+          "fmt": "num"
+        },
+        {
+          "label": "Avg debt yield",
+          "col": "Debt Yield (%)",
+          "agg": "avg",
+          "fmt": "pct"
+        },
+        {
+          "label": "Loans on file",
+          "col": "Loan Amount ($)",
+          "agg": "count"
+        }
       ],
-      "chart": { "col": "Loan Amount ($)", "agg": "sum", "label": "Debt by submarket" },
-      "cols": ["Lender", "Loan Amount ($)", "Interest Rate (%)", "Loan Maturity", "LTV (%)"]
+      "chart": {
+        "col": "Loan Amount ($)",
+        "agg": "sum",
+        "label": "Debt by submarket"
+      },
+      "cols": [
+        "Lender",
+        "Loan Amount ($)",
+        "Loan Type",
+        "Index",
+        "Spread (bps)",
+        "Interest Rate (%)",
+        "Amortization (yrs)",
+        "IO Period (mos)",
+        "DSCR",
+        "Debt Yield (%)",
+        "LTV (%)",
+        "Origination Date",
+        "Loan Maturity",
+        "Prepayment",
+        "Recourse"
+      ]
     }
   },
   "basemap": {

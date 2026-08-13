@@ -24,14 +24,13 @@ IDMT.filterEngine = (function () {
     return Object.keys(IDMT.typeColors).filter((t) => !state.hiddenTypes.has(t));
   }
 
-  /* all filter defs that currently apply: universal + defs for every visible type */
-  function activeDefs() {
-    const { universal, byType } = fieldDefs();
-    const defs = [...universal];
-    for (const t of visibleTypes()) {
-      for (const d of byType[t] || []) defs.push(Object.assign({ type: t }, d));
-    }
-    return defs;
+  /* Asset-specific criteria are DEPENDENT on a deliberate class selection:
+     they only activate when the user has narrowed to specific class(es).
+     With every class on (the default), only universal criteria apply. */
+  function isNarrowed() {
+    const all = Object.keys(IDMT.typeColors).length;
+    const vis = visibleTypes().length;
+    return vis > 0 && vis < all;
   }
 
   function distinctValues(col) {
@@ -61,19 +60,24 @@ IDMT.filterEngine = (function () {
       const hay = (p._name + ' ' + p._address + ' ' + p._city + ' ' + p._submarket + ' ' + p._type + ' ' + p._id).toLowerCase();
       if (!hay.includes(q)) return false;
     }
-    const { byType } = fieldDefs();
+    const { byType, universal } = fieldDefs();
     const typeCols = new Set((byType[p._type] || []).map((d) => d.col));
-    const universalCols = new Set(fieldDefs().universal.map((d) => d.col));
+    const universalCols = new Set(universal.map((d) => d.col));
+    const narrowed = isNarrowed();
 
     for (const [col, sel] of Object.entries(state.multi)) {
       if (!sel || !sel.size) continue;
-      // type-specific filters only constrain rows of that type
-      if (!universalCols.has(col) && !typeCols.has(col)) continue;
+      if (!universalCols.has(col)) {
+        // asset-specific criteria: dormant unless class(es) selected; only constrain rows of that type
+        if (!narrowed || !typeCols.has(col)) continue;
+      }
       if (!sel.has(String(p[col] ?? '').trim())) return false;
     }
     for (const [col, [lo, hi]] of Object.entries(state.range)) {
       if (lo === null && hi === null) continue;
-      if (!universalCols.has(col) && !typeCols.has(col)) continue;
+      if (!universalCols.has(col)) {
+        if (!narrowed || !typeCols.has(col)) continue;
+      }
       const n = IDMT.num(p[col]);
       if (n === null) return false;
       if (lo !== null && n < lo) return false;
@@ -87,9 +91,11 @@ IDMT.filterEngine = (function () {
   };
 
   function activeCount() {
+    const universalCols = new Set(fieldDefs().universal.map((d) => d.col));
+    const counts = (col) => universalCols.has(col) || isNarrowed(); // dormant asset criteria don't count
     let n = state.hiddenTypes.size ? 1 : 0;
-    for (const sel of Object.values(state.multi)) if (sel && sel.size) n++;
-    for (const [lo, hi] of Object.values(state.range)) if (lo !== null || hi !== null) n++;
+    for (const [col, sel] of Object.entries(state.multi)) if (sel && sel.size && counts(col)) n++;
+    for (const [col, [lo, hi]] of Object.entries(state.range)) if ((lo !== null || hi !== null) && counts(col)) n++;
     return n;
   }
 
@@ -196,8 +202,15 @@ IDMT.filterEngine = (function () {
     container.querySelector('.f-clear').addEventListener('click', () => { clearAll(); renderPanel(container); });
 
     section('Universal', universal, container);
-    for (const t of visibleTypes()) {
-      section(t + ' criteria', byType[t] || [], container, IDMT.typeColors[t]);
+    if (isNarrowed()) {
+      for (const t of visibleTypes()) {
+        section(t + ' criteria', byType[t] || [], container, IDMT.typeColors[t]);
+      }
+    } else {
+      const hint = document.createElement('div');
+      hint.className = 'f-hint';
+      hint.textContent = 'Select specific asset class(es) — via the type toggles or chips — to unlock asset-specific criteria (dock doors, clear height, units, traffic counts…).';
+      container.appendChild(hint);
     }
     container.scrollTop = scroll;
   }
