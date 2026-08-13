@@ -44,7 +44,10 @@ IDMT.map = (function () {
       bearing: 0,
       maxBounds: m.maxBounds || undefined,
       minZoom: m.minZoom || 0,
-      antialias: true,
+      // MSAA on a full-screen Retina canvas with extrusions roughly halves the frame
+      // rate — crispness comes from devicePixelRatio, which we keep at native.
+      antialias: false,
+      fadeDuration: 150,
       attributionControl: { compact: true },
     });
     IDMT._map = map;
@@ -68,7 +71,7 @@ IDMT.map = (function () {
     });
     // buildings "grow out of the ground" the first time the camera gets close
     map.on('zoomend', () => {
-      if (!buildingsGrown && map.getZoom() >= 13) growBuildings();
+      if (!buildingsGrown && map.getZoom() >= 15) growBuildings();
     });
     map.on('mousedown', stopOrbit);
     new ResizeObserver(() => map.resize()).observe(document.getElementById('map'));
@@ -114,10 +117,11 @@ IDMT.map = (function () {
     const src = bLayer ? bLayer.source : vectorSourceKey();
     const srcLayer = bLayer ? bLayer['source-layer'] : 'building';
     if (!src) return;
-    // If the basemap ships its own extrusion layer, hide it — ours is the one
-    // wired to the toggle and the grow animation.
+    // Hide the basemap's own building layers: its extrusions would fight ours, and its
+    // 2D footprints z-fight under our extrusions during zoom (visible flicker).
     for (const l of styleLayers) {
-      if (l.type === 'fill-extrusion' && !l.id.startsWith('idmt')) {
+      if (l.id.startsWith('idmt')) continue;
+      if (l.type === 'fill-extrusion' || (l['source-layer'] === srcLayer && (l.type === 'fill' || l.type === 'line'))) {
         map.setLayoutProperty(l.id, 'visibility', 'none');
       }
     }
@@ -127,7 +131,7 @@ IDMT.map = (function () {
         type: 'fill-extrusion',
         source: src,
         'source-layer': srcLayer,
-        minzoom: 12,
+        minzoom: 14.3,
         paint: {
           // dark-theme ramp: taller buildings read lighter so the skyline pops
           'fill-extrusion-color': [
@@ -136,7 +140,8 @@ IDMT.map = (function () {
           ],
           'fill-extrusion-height': buildingHeightExpr(1),
           'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0],
-          'fill-extrusion-opacity': 0.95,
+          // fade the skyline in over half a zoom level instead of popping
+          'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.4, 0, 15.1, 0.95],
         },
       },
       firstSymbolLayerId()
@@ -184,14 +189,18 @@ IDMT.map = (function () {
       map.addLayer({
         id: srcId + '-fill', type: 'fill', source: srcId, 'source-layer': srcLayer,
         minzoom,
-        paint: { 'fill-color': '#c98500', 'fill-opacity': 0.04 },
+        paint: {
+          'fill-color': '#c98500',
+          'fill-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0, minzoom + 0.6, 0.04],
+        },
       }, firstSymbolLayerId());
       map.addLayer({
         id: srcId + '-line', type: 'line', source: srcId, 'source-layer': srcLayer,
         minzoom,
         paint: {
           'line-color': '#a08c5a',
-          'line-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0.35, 16, 0.8],
+          // fade in over ~half a zoom level — no hard pop when the fabric arrives
+          'line-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0, minzoom + 0.6, 0.5, 16.5, 0.85],
           'line-width': ['interpolate', ['linear'], ['zoom'], minzoom, 0.4, 17, 1.4],
         },
       }, firstSymbolLayerId());
@@ -316,9 +325,11 @@ IDMT.map = (function () {
     });
   }
 
-  /* Pulsing ring on the selected pin — runs only while something is selected. */
+  /* Pulsing ring on the selected pin — runs only while something is selected,
+     and yields while the camera is animating so it never competes with a zoom. */
   function pulseLoop(t0) {
     if (!selectedId || !styleReady || !map.getLayer('idmt-selected')) { pulseRAF = null; return; }
+    if (map.isMoving()) { pulseRAF = requestAnimationFrame(pulseLoop); return; }
     const s = (performance.now() % 1600) / 1600;
     const wave = 0.5 + 0.5 * Math.sin(s * Math.PI * 2);
     map.setPaintProperty('idmt-selected', 'circle-stroke-width', 1.8 + wave * 2.2);

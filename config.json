@@ -61,7 +61,7 @@
         "data/parcels/msp_parcels_east.pmtiles"
       ],
       "sourceLayer": "parcels",
-      "minzoom": 13,
+      "minzoom": 14,
       "attribution": "Parcels: MetroGIS Regional Parcel Dataset (open data)"
     }
   },
