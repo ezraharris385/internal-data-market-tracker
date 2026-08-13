@@ -43,6 +43,7 @@ IDMT.map = (function () {
       pitch: 0,
       bearing: 0,
       maxBounds: m.maxBounds || undefined,
+      minZoom: m.minZoom || 0,
       antialias: true,
       attributionControl: { compact: true },
     });
@@ -60,6 +61,7 @@ IDMT.map = (function () {
       addParcelTiles();
       addBoundaryLayers();
       addPropertyLayers();
+      map.moveLayer('idmt-submarket-labels'); // labels above pins — they must always read
       wireInteractions();
       refreshData();
       flyIntro();
@@ -100,15 +102,21 @@ IDMT.map = (function () {
   }
 
   function buildingHeightExpr(mult) {
-    return ['*', mult, ['coalesce', ['get', 'render_height'], 10]];
+    return ['*', mult, ['coalesce', ['get', 'render_height'], ['get', 'height'], 12]];
   }
 
   function addBuildings() {
-    const src = vectorSourceKey();
+    // Derive the building source + source-layer from the basemap's own style so this
+    // works across providers (CARTO, OpenFreeMap, MapTiler…) without hardcoding.
+    const styleLayers = map.getStyle().layers || [];
+    const bLayer = styleLayers.find((l) => l['source-layer'] === 'building')
+      || styleLayers.find((l) => /building/i.test(l.id) && l['source-layer']);
+    const src = bLayer ? bLayer.source : vectorSourceKey();
+    const srcLayer = bLayer ? bLayer['source-layer'] : 'building';
     if (!src) return;
-    // If the basemap style ships its own extrusion layer (liberty's "building-3d"),
-    // hide it — ours is the one wired to the toggle and the grow animation.
-    for (const l of map.getStyle().layers || []) {
+    // If the basemap ships its own extrusion layer, hide it — ours is the one
+    // wired to the toggle and the grow animation.
+    for (const l of styleLayers) {
       if (l.type === 'fill-extrusion' && !l.id.startsWith('idmt')) {
         map.setLayoutProperty(l.id, 'visibility', 'none');
       }
@@ -118,16 +126,17 @@ IDMT.map = (function () {
         id: 'idmt-3d-buildings',
         type: 'fill-extrusion',
         source: src,
-        'source-layer': 'building',
-        minzoom: 12.5,
+        'source-layer': srcLayer,
+        minzoom: 12,
         paint: {
+          // dark-theme ramp: taller buildings read lighter so the skyline pops
           'fill-extrusion-color': [
-            'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 10],
-            0, '#dcdad3', 60, '#c7c4bb', 150, '#aeaba1',
+            'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], ['get', 'height'], 12],
+            0, '#2e3138', 40, '#3d414b', 100, '#4d525e', 200, '#5d6370',
           ],
           'fill-extrusion-height': buildingHeightExpr(1),
-          'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-          'fill-extrusion-opacity': 0.92,
+          'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0],
+          'fill-extrusion-opacity': 0.95,
         },
       },
       firstSymbolLayerId()
@@ -227,27 +236,41 @@ IDMT.map = (function () {
 
     map.addLayer({
       id: 'idmt-submarkets-fill', type: 'fill', source: 'idmt-submarkets',
-      paint: { 'fill-color': '#9085e9', 'fill-opacity': 0.07 },
+      paint: { 'fill-color': '#9085e9', 'fill-opacity': 0.06 },
+    });
+    // soft glow underlay + crisp solid line: boundaries read clearly at every zoom
+    map.addLayer({
+      id: 'idmt-submarkets-glow', type: 'line', source: 'idmt-submarkets',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#9085e9', 'line-width': 7, 'line-opacity': 0.18, 'line-blur': 3 },
     });
     map.addLayer({
       id: 'idmt-submarkets-line', type: 'line', source: 'idmt-submarkets',
-      paint: { 'line-color': '#9085e9', 'line-width': 1.6, 'line-dasharray': [3, 2] },
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': '#a89ef0',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.6, 13, 2.6],
+        'line-opacity': 0.95,
+      },
     });
     map.addLayer({
       id: 'idmt-submarkets-highlight', type: 'line', source: 'idmt-submarkets',
       filter: ['==', ['coalesce', ['get', 'name'], ['get', 'Name'], ''], '__none__'],
-      paint: { 'line-color': '#3987e5', 'line-width': 3.5 },
+      paint: { 'line-color': '#3987e5', 'line-width': 4 },
     });
     map.addLayer({
       id: 'idmt-submarket-labels', type: 'symbol', source: 'idmt-submarket-labels',
       layout: {
         'text-field': ['get', 'name'],
         'text-font': styleFont(),
-        'text-size': 12.5,
+        'text-size': ['interpolate', ['linear'], ['zoom'], 9, 11.5, 13, 14],
         'text-letter-spacing': 0.08,
         'text-transform': 'uppercase',
+        // always place our labels — basemap labels must never knock submarket names off the map
+        'text-allow-overlap': true,
+        'text-ignore-placement': false,
       },
-      paint: { 'text-color': '#c3c2b7', 'text-halo-color': '#0d0d0d', 'text-halo-width': 1.4 },
+      paint: { 'text-color': '#d6d2f5', 'text-halo-color': '#0d0d0d', 'text-halo-width': 2 },
     });
     map.addLayer({
       id: 'idmt-parcels-fill', type: 'fill', source: 'idmt-parcels',
@@ -374,7 +397,7 @@ IDMT.map = (function () {
 
   function wireControls() {
     toggle('lyr-3d', ['idmt-3d-buildings']);
-    toggle('lyr-submarkets', ['idmt-submarkets-fill', 'idmt-submarkets-line', 'idmt-submarkets-highlight']);
+    toggle('lyr-submarkets', ['idmt-submarkets-fill', 'idmt-submarkets-glow', 'idmt-submarkets-line', 'idmt-submarkets-highlight']);
     toggle('lyr-submarket-labels', ['idmt-submarket-labels']);
     toggle('lyr-parcels', ['idmt-parcels-fill', 'idmt-parcels-line']);
     toggle('lyr-parcel-tiles', () => IDMT._parcelTileLayerIds || []);

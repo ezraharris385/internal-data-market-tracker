@@ -9,7 +9,17 @@
     "zoom": 10.3,
     "pitch": 50,
     "bearing": -12,
-    "maxBounds": null
+    "maxBounds": [
+      [
+        -94.75,
+        44.05
+      ],
+      [
+        -92.05,
+        45.85
+      ]
+    ],
+    "minZoom": 8
   },
   "branding": {
     "appName": "Internal Data Market Tracker",
@@ -22,35 +32,23 @@
   "layers": {
     "submarkets": {
       "default": [
-        "data/submarkets/msp_submarkets.kmz",
-        "data/submarkets/CRE_Submarkets_Multifamily.kmz",
-        "data/submarkets/cities.geojson"
+        "data/submarkets/msp_submarkets.kmz"
       ],
       "byType": {
         "Office": [
-          "data/submarkets/msp_submarkets.kmz",
-          "data/submarkets/CRE_Submarkets_Office.kmz",
-          "data/submarkets/cities.geojson"
+          "data/submarkets/msp_submarkets.kmz"
         ],
         "Industrial": [
-          "data/submarkets/msp_submarkets.kmz",
-          "data/submarkets/CRE_Submarkets_Industrial.kmz",
-          "data/submarkets/cities.geojson"
+          "data/submarkets/msp_submarkets.kmz"
         ],
         "Retail": [
-          "data/submarkets/msp_submarkets.kmz",
-          "data/submarkets/CRE_Submarkets_Retail.kmz",
-          "data/submarkets/cities.geojson"
+          "data/submarkets/msp_submarkets.kmz"
         ],
         "Multifamily": [
-          "data/submarkets/msp_submarkets.kmz",
-          "data/submarkets/CRE_Submarkets_Multifamily.kmz",
-          "data/submarkets/cities.geojson"
+          "data/submarkets/msp_submarkets.kmz"
         ],
         "Land": [
-          "data/submarkets/msp_submarkets.kmz",
-          "data/submarkets/CRE_Submarkets_Land.kmz",
-          "data/submarkets/cities.geojson"
+          "data/submarkets/msp_submarkets.kmz"
         ]
       }
     },
@@ -777,7 +775,7 @@
     }
   },
   "basemap": {
-    "style": "https://tiles.openfreemap.org/styles/liberty",
+    "style": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
     "satelliteTiles": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     "satelliteAttribution": "Imagery © Esri, Maxar, Earthstar Geographics"
   }
