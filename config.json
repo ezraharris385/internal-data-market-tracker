@@ -18,13 +18,37 @@
   },
   "layers": {
     "submarkets": {
-      "default": ["data/submarkets/msp_submarkets.kmz"],
+      "default": [
+        "data/submarkets/msp_submarkets.kmz",
+        "data/submarkets/CRE_Submarkets_Multifamily.kmz",
+        "data/submarkets/cities.geojson"
+      ],
       "byType": {
-        "Office": [],
-        "Industrial": [],
-        "Retail": [],
-        "Multifamily": [],
-        "Land": []
+        "Office": [
+          "data/submarkets/msp_submarkets.kmz",
+          "data/submarkets/CRE_Submarkets_Office.kmz",
+          "data/submarkets/cities.geojson"
+        ],
+        "Industrial": [
+          "data/submarkets/msp_submarkets.kmz",
+          "data/submarkets/CRE_Submarkets_Industrial.kmz",
+          "data/submarkets/cities.geojson"
+        ],
+        "Retail": [
+          "data/submarkets/msp_submarkets.kmz",
+          "data/submarkets/CRE_Submarkets_Retail.kmz",
+          "data/submarkets/cities.geojson"
+        ],
+        "Multifamily": [
+          "data/submarkets/msp_submarkets.kmz",
+          "data/submarkets/CRE_Submarkets_Multifamily.kmz",
+          "data/submarkets/cities.geojson"
+        ],
+        "Land": [
+          "data/submarkets/msp_submarkets.kmz",
+          "data/submarkets/CRE_Submarkets_Land.kmz",
+          "data/submarkets/cities.geojson"
+        ]
       }
     },
     "parcels": [
