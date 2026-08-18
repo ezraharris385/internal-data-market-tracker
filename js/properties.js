@@ -81,7 +81,7 @@ IDMT.propertiesView = (function () {
     });
     table.querySelectorAll('tbody tr').forEach((tr) => {
       tr.addEventListener('click', () => {
-        IDMT.app.switchView('map');
+        IDMT.app.switchView('properties');
         IDMT.map.focusProperty(tr.dataset.id);
       });
     });

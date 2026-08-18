@@ -219,9 +219,58 @@ body {
 .notes-pad:focus { border-color: var(--accent); }
 .notes-status { font-size: 11.5px; color: #0ca30c; margin-left: 8px; }
 
+/* ---------- bottom-left map dock: everything mapping / view related ---------- */
+.map-dock { position: absolute; left: 14px; bottom: 40px; z-index: 22; }
+.dock-bar {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 5px 6px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+.dock-btn {
+  font: inherit; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary); background: transparent;
+  border: none; border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap;
+}
+.dock-btn:hover { color: var(--text-primary); background: var(--surface-2); }
+.dock-btn.active { color: var(--text-primary); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--accent); }
+.dock-sep { width: 1px; height: 18px; background: var(--grid); margin: 0 3px; }
+.dock-pop {
+  display: none; position: absolute; bottom: calc(100% + 8px); left: 0;
+  min-width: 210px; background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  font-size: 12.5px; max-height: min(430px, calc(100vh - 200px)); overflow-y: auto;
+}
+.dock-pop.open { display: block; }
+/* boundary visuals belong to the Markets tab only */
+body.mode-properties .markets-only { display: none; }
+
+.filters-btn.add { color: #fff; background: var(--accent); border-color: var(--accent); }
+.filters-btn.add:hover { filter: brightness(1.12); }
+.chips-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* property page category sections */
+.detail-cat { border: 1px solid var(--grid); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+.detail-cat summary {
+  list-style: none; cursor: pointer; user-select: none;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 12px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-secondary);
+  background: var(--surface-2);
+}
+.detail-cat summary::-webkit-details-marker { display: none; }
+.detail-cat summary .cat-n { font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: 0; }
+.detail-cat .detail-fields { padding: 2px 12px 8px; }
+.detail-cat td.nodata { color: var(--text-muted); font-style: italic; }
+
+/* metric n-counts + suppression (Market Analytics reporting rules) */
+.card .n { font-size: 10.5px; color: var(--text-muted); margin-left: 5px; font-weight: 500; }
+.card .v.suppressed { font-size: 12.5px; font-weight: 500; color: var(--text-muted); line-height: 1.4; }
+
 /* presentation mode — clean frame for screen recording */
 body.presentation .topbar,
-body.presentation .layers-panel,
+body.presentation .map-dock,
 body.presentation .map-search,
 body.presentation .statusbar { display: none; }
 body.presentation .view.active { position: fixed; inset: 0; }

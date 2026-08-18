@@ -34,7 +34,7 @@ IDMT.search = (function () {
         sub: [p._address, p._city].filter(Boolean).join(', '),
         text: (p._name + ' ' + p._address + ' ' + p._city + ' ' + p._id).toLowerCase(),
         color: IDMT.typeColors[p._type] || '#898781',
-        action: () => { IDMT.app.switchView('map'); IDMT.map.focusProperty(p._id); },
+        action: () => { IDMT.app.switchView('properties'); IDMT.map.focusProperty(p._id); },
       });
     }
     // submarkets across every boundary set: fly on the map
@@ -42,7 +42,7 @@ IDMT.search = (function () {
       index.push({
         kind: 'Submarket', label: name, sub: 'Submarket boundary',
         text: name.toLowerCase(), color: '#9085e9', square: true,
-        action: () => { IDMT.app.switchView('map'); IDMT.map.focusSubmarket(name); },
+        action: () => { IDMT.app.switchView('markets'); IDMT.map.focusSubmarket(name); },
       });
     }
     const distinct = (get) => [...new Set(IDMT.properties.map(get).filter(Boolean))].sort();

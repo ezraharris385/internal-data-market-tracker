@@ -795,5 +795,108 @@
     "style": "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
     "satelliteTiles": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     "satelliteAttribution": "Imagery © Esri, Maxar, Earthstar Geographics"
+  },
+  "propertyTemplate": {
+    "Identity & Physical": [
+      "Property Type",
+      "Property Subtype",
+      "Class",
+      "Status",
+      "Tenancy",
+      "Building SF",
+      "Unit Count",
+      "Land Acres",
+      "Stories",
+      "Year Built",
+      "Year Renovated",
+      "Clear Height (ft)",
+      "Dock Doors",
+      "Drive-In Doors",
+      "Parking Spaces",
+      "Parking Ratio (/1000 SF)",
+      "Zoning",
+      "Construction Type",
+      "Sprinkler System",
+      "Power (Amps)"
+    ],
+    "Location": [
+      "Address",
+      "City",
+      "County",
+      "State",
+      "Zip",
+      "Market",
+      "Submarket",
+      "Parcel / APN"
+    ],
+    "Ownership & Sales": [
+      "Owner",
+      "Owner Type",
+      "JV Partner",
+      "Ownership %",
+      "Last Sale Price",
+      "Last Sale Date",
+      "Price/SF",
+      "Cap Rate (%)",
+      "Buyer",
+      "Seller",
+      "Total Basis ($)"
+    ],
+    "Financing & Debt": [
+      "Lender",
+      "Loan Amount ($)",
+      "Loan Type",
+      "Index",
+      "Spread (bps)",
+      "Interest Rate (%)",
+      "Amortization (yrs)",
+      "IO Period (mos)",
+      "Origination Date",
+      "Loan Maturity",
+      "LTV (%)",
+      "DSCR",
+      "Debt Yield (%)",
+      "Recourse",
+      "Prepayment"
+    ],
+    "Leasing": [
+      "Occupancy %",
+      "Asking Rent ($/SF)",
+      "Rent Basis",
+      "Available SF",
+      "Largest Contiguous SF",
+      "WALT (yrs)",
+      "# Tenants",
+      "Avg Lease Term (yrs)",
+      "Escalations (%/yr)",
+      "TI Allowance ($/SF)",
+      "Free Rent (mos)",
+      "Renewal Options",
+      "Largest Tenant",
+      "Largest Tenant SF",
+      "Next Major Expiry"
+    ],
+    "Condition & Capital": [
+      "Capital Project",
+      "Capital Project Status",
+      "CapEx Budget ($)",
+      "CapEx Spent ($)",
+      "Renovation Budget ($)",
+      "Renovation Scope"
+    ],
+    "Valuation & Tax": [
+      "NOI ($)",
+      "In-Place Rent ($/SF)",
+      "OpEx ($/SF)",
+      "RE Taxes ($/SF)",
+      "Insurance ($/SF)",
+      "Assessed Value",
+      "Annual Taxes"
+    ],
+    "Development": [
+      "Developer",
+      "Construction Start",
+      "Est. Delivery"
+    ]
   }
 }

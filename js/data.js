@@ -72,11 +72,12 @@ IDMT.ingestWorkbook = function (arrayBuffer) {
   IDMT.rebuildProperties();
 };
 
-/* Rebuild normalized properties from rawRows + the local edit overlay. */
+/* Rebuild normalized properties from rawRows + user-added rows + the local edit overlay. */
 IDMT.rebuildProperties = function () {
   const overlay = IDMT.edits.all();
   const f = IDMT.config.fields;
-  IDMT.properties = IDMT.rawRows.map((raw, i) => {
+  const allRows = [...IDMT.rawRows, ...IDMT.addedRows.all()];
+  IDMT.properties = allRows.map((raw, i) => {
     const id = String(raw[f.id] || 'P-' + (i + 1));
     const merged = overlay[id] ? Object.assign({}, raw, overlay[id]) : raw;
     return IDMT.normalizeRow(merged, i);
@@ -84,6 +85,43 @@ IDMT.rebuildProperties = function () {
   IDMT.assignTypeColors();
   IDMT.refreshActiveSubmarkets();
   IDMT.assignSubmarkets();
+  IDMT.assignAdminGeo();
+};
+
+/* ---------------- user-added properties (browser-side; export to commit) ---------------- */
+
+IDMT.addedRows = (function () {
+  const KEY = 'idmt-added';
+  let cache = null;
+  function all() {
+    if (cache === null) {
+      try { cache = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { cache = []; }
+    }
+    return cache;
+  }
+  function push(row) {
+    all().push(row);
+    localStorage.setItem(KEY, JSON.stringify(cache));
+  }
+  function count() { return all().length; }
+  return { all, push, count };
+})();
+
+/* Create a brand-new property from the Add form. Lives in this browser until the
+   workbook is exported and committed — same contract as edits. */
+IDMT.createProperty = function (changes) {
+  const f = IDMT.config.fields;
+  const row = {};
+  IDMT.columns.forEach((c) => { row[c] = ''; });
+  Object.assign(row, changes);
+  if (!row[f.id]) {
+    const n = IDMT.rawRows.length + IDMT.addedRows.count() + 1;
+    row[f.id] = 'NEW-' + String(n).padStart(3, '0');
+  }
+  IDMT.addedRows.push(row);
+  IDMT.rebuildProperties();
+  IDMT.emit('data');
+  return String(row[f.id]);
 };
 
 /* ---------------- local edit overlay (browser-side; export to commit) ---------------- */
@@ -113,11 +151,11 @@ IDMT.saveEdits = function (id, changes) {
   IDMT.emit('data');
 };
 
-/* Export the current data (workbook + local edits) back to .xlsx for committing. */
+/* Export the current data (workbook + local edits + added properties) back to .xlsx. */
 IDMT.exportWorkbook = function () {
   const overlay = IDMT.edits.all();
   const f = IDMT.config.fields;
-  const rows = IDMT.rawRows.map((raw, i) => {
+  const rows = [...IDMT.rawRows, ...IDMT.addedRows.all()].map((raw, i) => {
     const id = String(raw[f.id] || 'P-' + (i + 1));
     return overlay[id] ? Object.assign({}, raw, overlay[id]) : raw;
   });
@@ -226,6 +264,7 @@ IDMT.loadBoundaries = async function () {
   }
   IDMT.refreshActiveSubmarkets();
   IDMT.assignSubmarkets();
+  IDMT.assignAdminGeo();
 };
 
 /* bbox of a FeatureCollection: [[minX, minY], [maxX, maxY]] or null */
@@ -310,6 +349,33 @@ IDMT.assignSubmarkets = function () {
   }
 };
 
+/* Derive City / County / State / Market from the boundary files when the workbook
+   leaves them blank — location is DATA (searchable, filterable, shown on the
+   property record), not just a visual layer. Workbook values always win. */
+IDMT.assignAdminGeo = function () {
+  if (!IDMT.admin || !IDMT.properties.length) return;
+  const cities = IDMT.admin.cities, counties = IDMT.admin.counties;
+  for (const p of IDMT.properties) {
+    const pt = [p._lng, p._lat];
+    if (!p._city && cities) {
+      const hit = cities.features.find((f) => pointInFeature(pt, f));
+      if (hit) { p._city = IDMT.featureName(hit); p[IDMT.config.fields.city] = p._city; }
+    }
+    if (!p._county && counties) {
+      const hit = counties.features.find((f) => pointInFeature(pt, f));
+      if (hit) {
+        p._county = IDMT.featureName(hit).replace(/\s+County$/i, '');
+        p[IDMT.config.fields.county] = p._county;
+      }
+    }
+    if (!p._state && p._county) {
+      p._state = /\(WI\)/i.test(p._county) ? 'WI' : 'MN';
+      p[IDMT.config.fields.state] = p._state;
+    }
+    if (!p['Market']) p['Market'] = IDMT.config.market.name;
+  }
+};
+
 /* ---------------- module aggregation (database sub-tabs) ---------------- */
 
 function passesWhere(p, where) {
@@ -325,21 +391,28 @@ IDMT.moduleAggregate = function (mod) {
 
   const metrics = (mod.metrics || []).map((m) => {
     const pool = m.where ? rows.filter((p) => passesWhere(p, m.where)) : rows;
-    let value = null;
+    let value = null, n = 0;
     if (m.agg === 'count') {
-      value = pool.filter((p) => String(p[m.col] ?? '') !== '').length;
+      value = n = pool.filter((p) => String(p[m.col] ?? '') !== '').length;
     } else if (m.agg === 'countValue') {
-      value = pool.filter((p) => String(p[m.col] ?? '').trim() === m.value).length;
+      value = n = pool.filter((p) => String(p[m.col] ?? '').trim() === m.value).length;
     } else {
-      const nums = pool.map((p) => num(p[m.col])).filter((n) => n !== null);
+      const nums = pool.map((p) => num(p[m.col])).filter((x) => x !== null);
+      n = nums.length;
       if (nums.length) {
         if (m.agg === 'sum') value = nums.reduce((a, b) => a + b, 0);
         else if (m.agg === 'avg') value = nums.reduce((a, b) => a + b, 0) / nums.length;
         else if (m.agg === 'max') value = Math.max(...nums);
       }
     }
+    // Market Analytics reporting rules: summary stats need n ≥ 3; every stat carries its n
+    const suppressed = m.agg === 'avg' && n > 0 && n < 3;
     const fmt = IDMT.fmt[m.fmt] || IDMT.fmt.int;
-    return { label: m.label, display: m.agg === 'count' || m.agg === 'countValue' ? IDMT.fmt.count(value ?? 0) : fmt(value) };
+    return {
+      label: m.label, n,
+      suppressed,
+      display: m.agg === 'count' || m.agg === 'countValue' ? IDMT.fmt.count(value ?? 0) : fmt(value),
+    };
   });
 
   let chart = null;

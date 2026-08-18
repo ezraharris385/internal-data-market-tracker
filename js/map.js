@@ -10,6 +10,15 @@ IDMT.map = (function () {
   let orbiting = false;
   let buildingsGrown = false;
   let msaFitted = false;
+  let mode = 'properties'; // 'properties' | 'markets' — markets shows boundary visuals
+  let pickCallback = null; // one-shot map click for the Add-property form
+
+  const BOUNDARY_LAYERS = {
+    'lyr-submarkets': ['idmt-submarkets-fill', 'idmt-submarkets-glow', 'idmt-submarkets-line', 'idmt-submarkets-highlight'],
+    'lyr-submarket-labels': ['idmt-submarket-labels'],
+    'lyr-counties': ['idmt-counties-line', 'idmt-county-labels'],
+    'lyr-cities': ['idmt-cities-line', 'idmt-city-labels'],
+  };
   let selectedId = null;
   let pulseRAF = null;
 
@@ -53,7 +62,7 @@ IDMT.map = (function () {
     });
     IDMT._map = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
-    map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }), 'bottom-left');
+    map.addControl(new maplibregl.ScaleControl({ unit: 'imperial' }), 'bottom-right');
     hoverPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 });
 
     // 'style.load' rather than 'load': custom layers go on as soon as the style is
@@ -71,6 +80,7 @@ IDMT.map = (function () {
       map.moveLayer('idmt-submarket-labels'); // labels above pins — they must always read
       wireInteractions();
       refreshData();
+      applyMode();
       flyIntro();
     });
     // buildings "grow out of the ground" the first time the camera gets close
@@ -484,7 +494,36 @@ IDMT.map = (function () {
       hoverPopup.remove();
     });
     map.on('click', 'idmt-properties-pt', (e) => {
+      if (pickCallback) return; // picking a location — don't open drawers
       focusProperty(e.features[0].properties.id, { fly: false });
+    });
+
+    // one-shot location pick for the Add-property form (registered before other clicks)
+    map.on('click', (e) => {
+      if (!pickCallback) return;
+      const cb = pickCallback;
+      pickCallback = null;
+      map.getCanvas().style.cursor = '';
+      cb(e.lngLat);
+    });
+
+    // Markets mode: click a submarket → tracked-inventory quick stats
+    map.on('click', 'idmt-submarkets-fill', (e) => {
+      if (mode !== 'markets' || pickCallback) return;
+      if (map.queryRenderedFeatures(e.point, { layers: ['idmt-properties-pt'] }).length) return;
+      const name = IDMT.featureName(e.features[0]);
+      const inSub = IDMT.properties.filter((p) => p._submarket === name);
+      const sf = inSub.reduce((a, p) => a + (p._size || 0), 0);
+      const occ = inSub.filter((p) => p._occ !== null);
+      const avgOcc = occ.length ? occ.reduce((a, p) => a + p._occ, 0) / occ.length : null;
+      hoverPopup.remove();
+      new maplibregl.Popup({ offset: 8, maxWidth: '280px' })
+        .setLngLat(e.lngLat)
+        .setHTML(`<div class="popup-name">${esc(name)}</div>
+          <div class="popup-sub"><b>Tracked properties:</b> ${inSub.length}</div>
+          <div class="popup-sub"><b>Tracked SF:</b> ${IDMT.fmt.int(sf)}</div>
+          <div class="popup-sub"><b>Avg occupancy:</b> ${inSub.length >= 3 ? IDMT.fmt.pct(avgOcc) : 'n < 3'}</div>`)
+        .addTo(map);
     });
   }
 
@@ -492,12 +531,34 @@ IDMT.map = (function () {
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  /* ---------- view modes: Properties (no boundary visuals) vs Markets ---------- */
+
+  function applyMode() {
+    if (!styleReady) return;
+    for (const [checkboxId, layers] of Object.entries(BOUNDARY_LAYERS)) {
+      const cb = document.getElementById(checkboxId);
+      const vis = mode === 'markets' && cb && cb.checked ? 'visible' : 'none';
+      layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', vis));
+    }
+  }
+
+  function setMode(m) {
+    mode = m;
+    applyMode();
+  }
+
+  /* One-shot location picker for the Add-property form. */
+  function pickLocation(cb) {
+    pickCallback = cb;
+    map.getCanvas().style.cursor = 'crosshair';
+  }
+
   /* ---------- orbit + presentation ---------- */
 
   function startOrbit() {
     if (orbiting) return;
     orbiting = true;
-    document.getElementById('btn-orbit').textContent = 'Orbit: on';
+    document.getElementById('btn-orbit').classList.add('active');
     let last = performance.now();
     function spin(now) {
       if (!orbiting) return;
@@ -511,7 +572,7 @@ IDMT.map = (function () {
   function stopOrbit() {
     orbiting = false;
     const btn = document.getElementById('btn-orbit');
-    if (btn) btn.textContent = 'Orbit: off';
+    if (btn) btn.classList.remove('active');
   }
 
   function toggleOrbit() { orbiting ? stopOrbit() : startOrbit(); }
@@ -534,10 +595,11 @@ IDMT.map = (function () {
   function wireControls() {
     toggle('lyr-3d', ['idmt-3d-buildings']);
     toggle('lyr-msa', ['idmt-msa-glow', 'idmt-msa-line']);
-    toggle('lyr-counties', ['idmt-counties-line', 'idmt-county-labels']);
-    toggle('lyr-cities', ['idmt-cities-line', 'idmt-city-labels']);
-    toggle('lyr-submarkets', ['idmt-submarkets-fill', 'idmt-submarkets-glow', 'idmt-submarkets-line', 'idmt-submarkets-highlight']);
-    toggle('lyr-submarket-labels', ['idmt-submarket-labels']);
+    // boundary toggles route through the mode gate: visible only on the Markets tab
+    Object.keys(BOUNDARY_LAYERS).forEach((id) => {
+      const cb = document.getElementById(id);
+      if (cb) cb.addEventListener('change', applyMode);
+    });
     toggle('lyr-parcels', ['idmt-parcels-fill', 'idmt-parcels-line']);
     toggle('lyr-parcel-tiles', () => IDMT._parcelTileLayerIds || []);
     toggle('lyr-properties', ['idmt-properties-pt', 'idmt-properties-halo', 'idmt-selected']);
@@ -546,7 +608,7 @@ IDMT.map = (function () {
     document.getElementById('btn-pitch').addEventListener('click', () => {
       is3D = !is3D;
       map.easeTo({ pitch: is3D ? (IDMT.config.market.pitch || 50) : 0, duration: 600 });
-      document.getElementById('btn-pitch').textContent = 'Tilt: ' + (is3D ? '3D' : '2D');
+      document.getElementById('btn-pitch').textContent = is3D ? '3D' : '2D';
     });
     document.getElementById('btn-reset-view').addEventListener('click', () => {
       stopOrbit();
@@ -669,5 +731,5 @@ IDMT.map = (function () {
 
   function resize() { if (map) map.resize(); }
 
-  return { init, refreshData, refreshFiltered, focusProperty, focusSubmarket, resize, growBuildings, toggleOrbit };
+  return { init, refreshData, refreshFiltered, focusProperty, focusSubmarket, resize, growBuildings, toggleOrbit, setMode, pickLocation };
 })();

@@ -6,9 +6,9 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1.0" />
+  <link rel="stylesheet" href="css/styles.css?v=1.1" />
 </head>
-<body>
+<body class="mode-properties">
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">▦</span>
@@ -18,18 +18,21 @@
       </div>
     </div>
     <nav class="tabs" id="tabs">
-      <button class="tab active" data-view="map">Map</button>
-      <button class="tab" data-view="database">Market Database</button>
-      <button class="tab" data-view="properties">Properties</button>
+      <button class="tab active" data-view="properties">Properties</button>
+      <button class="tab" data-view="markets">Markets</button>
+      <button class="tab" data-view="leasing">Leasing</button>
+      <button class="tab" data-view="investment">Investment Activity</button>
+      <button class="tab" data-view="development">Development</button>
+      <button class="tab" data-view="data">Data</button>
     </nav>
     <div class="data-status" id="data-status">loading data…</div>
   </header>
 
-  <!-- ============ MAP VIEW ============ -->
+  <!-- ============ MAP (Properties + Markets modes) ============ -->
   <main id="view-map" class="view active">
     <div id="map"></div>
 
-    <!-- Search + filters -->
+    <!-- Search + filters + add -->
     <div class="map-search" id="map-search">
       <div class="search-row">
         <div class="search-box">
@@ -38,33 +41,43 @@
           <button class="search-clear" id="search-clear" title="Clear">✕</button>
         </div>
         <button class="filters-btn" id="map-filters-btn">Filters</button>
+        <button class="filters-btn add" id="btn-add-property" title="Add a new property">＋ Add</button>
       </div>
       <div class="search-suggestions" id="search-suggestions"></div>
       <div class="filters-panel" id="map-filters-panel"></div>
     </div>
 
-    <!-- Layer toggles -->
-    <div class="layers-panel" id="layers-panel">
-      <div class="layers-title">Layers</div>
-      <label class="layer-row"><input type="checkbox" id="lyr-3d" checked /> 3D buildings</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-msa" checked /> MSA boundary</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-counties" /> County boundaries</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-cities" /> City boundaries</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-submarkets" checked /> Submarket boundaries</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-submarket-labels" checked /> Submarket labels</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-parcels" checked /> Property boundaries</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-parcel-tiles" checked /> All parcels (metro)</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-properties" checked /> Properties</label>
-      <label class="layer-row"><input type="checkbox" id="lyr-satellite" /> Satellite imagery</label>
-      <div class="layers-divider"></div>
-      <div class="layers-title">Property types</div>
-      <div id="type-toggles"></div>
-      <div class="layers-divider"></div>
-      <button class="btn-ghost" id="btn-pitch">Tilt: 3D</button>
-      <button class="btn-ghost" id="btn-orbit">Orbit: off</button>
-      <button class="btn-ghost" id="btn-grow">Replay 3D build</button>
-      <button class="btn-ghost" id="btn-present">Presentation (h)</button>
-      <button class="btn-ghost" id="btn-reset-view">Reset view</button>
+    <!-- Bottom-left dock: everything mapping / view related -->
+    <div class="map-dock" id="map-dock">
+      <div class="dock-pop" id="dock-layers-pop">
+        <div class="layers-title">Map layers</div>
+        <label class="layer-row"><input type="checkbox" id="lyr-3d" checked /> 3D buildings</label>
+        <label class="layer-row"><input type="checkbox" id="lyr-msa" checked /> MSA boundary</label>
+        <label class="layer-row"><input type="checkbox" id="lyr-parcels" checked /> Property boundaries</label>
+        <label class="layer-row"><input type="checkbox" id="lyr-parcel-tiles" checked /> All parcels (metro)</label>
+        <label class="layer-row"><input type="checkbox" id="lyr-properties" checked /> Properties</label>
+        <label class="layer-row"><input type="checkbox" id="lyr-satellite" /> Satellite imagery</label>
+        <div class="layers-divider markets-only"></div>
+        <div class="layers-title markets-only">Market boundaries</div>
+        <label class="layer-row markets-only"><input type="checkbox" id="lyr-submarkets" checked /> Submarkets</label>
+        <label class="layer-row markets-only"><input type="checkbox" id="lyr-submarket-labels" checked /> Submarket labels</label>
+        <label class="layer-row markets-only"><input type="checkbox" id="lyr-counties" /> Counties</label>
+        <label class="layer-row markets-only"><input type="checkbox" id="lyr-cities" /> Cities</label>
+      </div>
+      <div class="dock-pop" id="dock-types-pop">
+        <div class="layers-title">Asset classes</div>
+        <div id="type-toggles"></div>
+      </div>
+      <div class="dock-bar">
+        <button class="dock-btn" id="dock-layers-btn" title="Map layers">Layers</button>
+        <button class="dock-btn" id="dock-types-btn" title="Asset classes">Types</button>
+        <span class="dock-sep"></span>
+        <button class="dock-btn" id="btn-pitch" title="Tilt">3D</button>
+        <button class="dock-btn" id="btn-orbit" title="Orbit (o)">Orbit</button>
+        <button class="dock-btn" id="btn-grow" title="Replay skyline build">⟳</button>
+        <button class="dock-btn" id="btn-present" title="Presentation mode (h)">🎥</button>
+        <button class="dock-btn" id="btn-reset-view" title="Fit the MSA">Reset</button>
+      </div>
     </div>
 
     <!-- Property detail drawer -->
@@ -74,13 +87,41 @@
     </aside>
   </main>
 
-  <!-- ============ MARKET DATABASE VIEW ============ -->
-  <main id="view-database" class="view">
+  <!-- ============ LEASING ============ -->
+  <main id="view-leasing" class="view">
     <div class="page">
-      <div class="page-head">
-        <h1 id="db-title">Market Database</h1>
-        <p class="page-sub">Aggregates computed exclusively from your uploaded workbook — nothing external.</p>
-      </div>
+      <div class="page-head"><h1>Leasing</h1><p class="page-sub">Availability, rents, and lease terms across tracked properties.</p></div>
+      <div class="filter-row"><div id="leasing-chips" class="chips-inline"></div><button class="filters-btn" id="leasing-filters-btn">Advanced filters</button></div>
+      <div class="filters-panel inline" id="leasing-filters-panel"></div>
+      <div id="leasing-body"></div>
+    </div>
+  </main>
+
+  <!-- ============ INVESTMENT ACTIVITY ============ -->
+  <main id="view-investment" class="view">
+    <div class="page">
+      <div class="page-head"><h1>Investment Activity</h1><p class="page-sub">Sales, financing, and capital investment across tracked properties.</p></div>
+      <div class="filter-row"><div id="investment-chips" class="chips-inline"></div><button class="filters-btn" id="investment-filters-btn">Advanced filters</button></div>
+      <div class="filters-panel inline" id="investment-filters-panel"></div>
+      <div class="filter-row module-tabs" id="investment-modchips"></div>
+      <div id="investment-body"></div>
+    </div>
+  </main>
+
+  <!-- ============ DEVELOPMENT ============ -->
+  <main id="view-development" class="view">
+    <div class="page">
+      <div class="page-head"><h1>Development</h1><p class="page-sub">Tracked pipeline — under construction and proposed.</p></div>
+      <div class="filter-row"><div id="development-chips" class="chips-inline"></div><button class="filters-btn" id="development-filters-btn">Advanced filters</button></div>
+      <div class="filters-panel inline" id="development-filters-panel"></div>
+      <div id="development-body"></div>
+    </div>
+  </main>
+
+  <!-- ============ DATA ============ -->
+  <main id="view-data" class="view">
+    <div class="page">
+      <div class="page-head"><h1 id="db-title">Data</h1><p class="page-sub">Everything below is computed exclusively from your uploaded workbook — tracked inventory, not the whole market.</p></div>
       <div class="filter-row">
         <div class="tab-search">
           <div class="search-box slim">
@@ -90,37 +131,26 @@
           <div class="search-suggestions" id="db-search-suggestions"></div>
         </div>
         <button class="filters-btn" id="db-filters-btn">Advanced filters</button>
+        <button class="btn-ghost" id="props-export" title="Download an .xlsx with your local edits applied">⬇ Export workbook</button>
+        <button class="filters-btn add" id="btn-add-property-2" title="Add a new property">＋ Add property</button>
       </div>
       <div class="filters-panel inline" id="db-filters-panel"></div>
+      <div class="filter-row module-tabs" id="data-subtabs"></div>
       <div class="filter-row" id="db-type-filter"></div>
-      <div class="filter-row module-tabs" id="db-module-tabs"></div>
-      <div id="db-module-body"></div>
-    </div>
-  </main>
 
-  <!-- ============ PROPERTIES VIEW ============ -->
-  <main id="view-properties" class="view">
-    <div class="page">
-      <div class="page-head">
-        <h1>Properties</h1>
+      <!-- sub-tab: Properties grid -->
+      <div id="data-properties">
         <p class="page-sub" id="props-count"></p>
-      </div>
-      <div class="filter-row">
-        <div class="tab-search">
-          <div class="search-box slim">
-            <span class="search-icon">⌕</span>
-            <input id="props-search-input" type="text" placeholder="Search property, submarket, city, county, state…" autocomplete="off" spellcheck="false" />
-          </div>
-          <div class="search-suggestions" id="props-search-suggestions"></div>
+        <div class="filter-row">
+          <input class="table-filter" id="props-filter" type="text" placeholder="Quick text filter…" />
+          <select id="props-type-select"><option value="">All types</option></select>
         </div>
-        <input class="table-filter" id="props-filter" type="text" placeholder="Quick text filter…" />
-        <select id="props-type-select"><option value="">All types</option></select>
-        <button class="filters-btn" id="props-filters-btn">Advanced filters</button>
-        <button class="btn-ghost" id="props-export" title="Download an .xlsx with your local edits applied">⬇ Export workbook</button>
+        <div class="table-card"><div class="table-scroll"><table id="properties-table"></table></div></div>
       </div>
-      <div class="filters-panel inline" id="props-filters-panel"></div>
-      <div class="table-card">
-        <div class="table-scroll"><table id="properties-table"></table></div>
+
+      <!-- sub-tab: Market Data -->
+      <div id="data-market" style="display:none">
+        <div id="db-module-body"></div>
       </div>
     </div>
   </main>
@@ -140,13 +170,13 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=1.0"></script>
-  <script src="js/filters.js?v=1.0"></script>
-  <script src="js/search.js?v=1.0"></script>
-  <script src="js/map.js?v=1.0"></script>
-  <script src="js/detail.js?v=1.0"></script>
-  <script src="js/database.js?v=1.0"></script>
-  <script src="js/properties.js?v=1.0"></script>
-  <script src="js/app.js?v=1.0"></script>
+  <script src="js/data.js?v=1.1"></script>
+  <script src="js/filters.js?v=1.1"></script>
+  <script src="js/search.js?v=1.1"></script>
+  <script src="js/map.js?v=1.1"></script>
+  <script src="js/detail.js?v=1.1"></script>
+  <script src="js/database.js?v=1.1"></script>
+  <script src="js/properties.js?v=1.1"></script>
+  <script src="js/app.js?v=1.1"></script>
 </body>
 </html>

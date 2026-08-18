@@ -1,73 +1,161 @@
-/* app.js — boot sequence, tab switching, drag-and-drop local preview. */
+/* app.js — boot sequence, function-view navigation, dock wiring, drag-and-drop preview.
+   Views: Properties + Markets share the map (Markets shows boundary visuals);
+   Leasing / Investment Activity / Development are module dashboards;
+   Data holds the Properties grid + Market Data sub-tabs. */
 
 IDMT.app = (function () {
+  let activeView = 'properties';
+  let dataSubtab = 'Properties';
+  let investmentModule = 'Sales';
+  const MAP_VIEWS = ['properties', 'markets'];
+
   function status(msg, isError) {
     const el = document.getElementById('data-status');
     el.textContent = msg;
     el.classList.toggle('error', !!isError);
   }
 
+  /* ---------- view switching ---------- */
+
   function switchView(name) {
+    activeView = name;
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
-    document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === 'view-' + name));
-    if (name === 'map') IDMT.map.resize();
-    if (name === 'database') IDMT.database.render();
-    if (name === 'properties') IDMT.propertiesView.render();
+    const isMap = MAP_VIEWS.includes(name);
+    document.querySelectorAll('.view').forEach((v) => {
+      v.classList.toggle('active', isMap ? v.id === 'view-map' : v.id === 'view-' + name);
+    });
+    if (isMap) {
+      document.body.classList.toggle('mode-markets', name === 'markets');
+      document.body.classList.toggle('mode-properties', name === 'properties');
+      IDMT.map.setMode(name);
+      IDMT.map.resize();
+    }
+    renderActive();
   }
+
+  /* re-render whatever the user is looking at */
+  function renderActive() {
+    if (MAP_VIEWS.includes(activeView)) return; // map renders reactively on its own
+    if (!IDMT.database.prep()) return;
+    if (activeView === 'leasing') {
+      IDMT.database.renderTypeChips(document.getElementById('leasing-chips'));
+      IDMT.database.renderModule(document.getElementById('leasing-body'), 'Leasing');
+    } else if (activeView === 'development') {
+      IDMT.database.renderTypeChips(document.getElementById('development-chips'));
+      IDMT.database.renderModule(document.getElementById('development-body'), 'Development');
+    } else if (activeView === 'investment') {
+      IDMT.database.renderTypeChips(document.getElementById('investment-chips'));
+      renderInvestmentChips();
+      IDMT.database.renderModule(document.getElementById('investment-body'), investmentModule);
+    } else if (activeView === 'data') {
+      IDMT.database.renderTypeChips(document.getElementById('db-type-filter'));
+      renderDataSubtabs();
+      const props = dataSubtab === 'Properties';
+      document.getElementById('data-properties').style.display = props ? '' : 'none';
+      document.getElementById('data-market').style.display = props ? 'none' : '';
+      if (props) IDMT.propertiesView.render();
+      else IDMT.database.renderOverview(document.getElementById('db-module-body'));
+    }
+  }
+
+  function chipRow(el, names, active, onPick) {
+    el.innerHTML = names.map((n) => `<button class="chip module ${active === n ? 'active' : ''}" data-m="${n}">${n}</button>`).join('');
+    el.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => onPick(c.dataset.m)));
+  }
+
+  function renderDataSubtabs() {
+    chipRow(document.getElementById('data-subtabs'), ['Properties', 'Market Data'], dataSubtab, (m) => { dataSubtab = m; renderActive(); });
+  }
+
+  function renderInvestmentChips() {
+    chipRow(document.getElementById('investment-modchips'), ['Sales', 'Financing', 'Capital Investment'], investmentModule, (m) => { investmentModule = m; renderActive(); });
+  }
+
+  /* ---------- shared refresh ---------- */
 
   function refreshAll() {
     IDMT.map.refreshData();
     IDMT.search.build();
     IDMT.propertiesView.refreshTypeOptions();
-    IDMT.database.render();
-    IDMT.propertiesView.render();
     renderFilterPanels();
+    renderActive();
     status(`${IDMT.properties.length} properties · ${IDMT.submarkets ? new Set(IDMT.submarkets.features.map(IDMT.featureName)).size : 0} submarkets`);
   }
 
+  const PANELS = [
+    ['map-filters-btn', 'map-filters-panel', 'Filters'],
+    ['db-filters-btn', 'db-filters-panel', 'Advanced filters'],
+    ['leasing-filters-btn', 'leasing-filters-panel', 'Advanced filters'],
+    ['investment-filters-btn', 'investment-filters-panel', 'Advanced filters'],
+    ['development-filters-btn', 'development-filters-panel', 'Advanced filters'],
+  ];
+
   function renderFilterPanels() {
-    ['map-filters-panel', 'props-filters-panel', 'db-filters-panel'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) IDMT.filterEngine.renderPanel(el);
-    });
     const n = IDMT.filterEngine.activeCount();
-    [['map-filters-btn', 'Filters'], ['props-filters-btn', 'Advanced filters'], ['db-filters-btn', 'Advanced filters']].forEach(([id, label]) => {
-      const btn = document.getElementById(id);
-      if (!btn) return;
+    for (const [btnId, panelId, label] of PANELS) {
+      const btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+      if (!btn || !panel) continue;
+      IDMT.filterEngine.renderPanel(panel);
       btn.innerHTML = label + (n ? ` <span class="count">${n}</span>` : '');
       btn.classList.toggle('active', n > 0);
-    });
+    }
   }
 
-  /* everything that shows data reacts to a filter change */
   function onFiltersChanged() {
     IDMT.refreshActiveSubmarkets();   // per-asset-type submarket sets follow the type toggles
     IDMT.map.refreshFiltered();
     IDMT.propertiesView.refreshTypeOptions();
-    IDMT.propertiesView.render();
-    IDMT.database.render();
     renderFilterPanels();
+    renderActive();
     const shown = IDMT.filteredProperties().length;
     status(`${shown} of ${IDMT.properties.length} properties shown · ${IDMT.filterEngine.activeCount()} filters`);
   }
 
-  /* fired after local edits (notes, field changes) rebuild the dataset */
+  /* fired after local edits / adds rebuild the dataset */
   function onDataChanged() {
     IDMT.search.build();
     onFiltersChanged();
-    const n = IDMT.edits.count();
-    if (n) status(`${IDMT.filteredProperties().length} of ${IDMT.properties.length} shown · ${n} propert${n === 1 ? 'y' : 'ies'} with local edits — export the workbook to keep them`);
+    const n = IDMT.edits.count(), a = IDMT.addedRows.count();
+    const bits = [];
+    if (a) bits.push(`${a} added propert${a === 1 ? 'y' : 'ies'}`);
+    if (n) bits.push(`${n} with local edits`);
+    if (bits.length) status(`${IDMT.filteredProperties().length} of ${IDMT.properties.length} shown · ${bits.join(' · ')} — export the workbook to keep them`);
   }
 
-  function wireFilterPanels() {
+  /* ---------- wiring ---------- */
+
+  function wirePanels() {
     IDMT.on('filters', onFiltersChanged);
     IDMT.on('data', onDataChanged);
-    [['map-filters-btn', 'map-filters-panel'], ['props-filters-btn', 'props-filters-panel'], ['db-filters-btn', 'db-filters-panel']].forEach(([btnId, panelId]) => {
+    for (const [btnId, panelId] of PANELS) {
       const btn = document.getElementById(btnId);
       if (btn) btn.addEventListener('click', () => document.getElementById(panelId).classList.toggle('open'));
-    });
+    }
     const exportBtn = document.getElementById('props-export');
     if (exportBtn) exportBtn.addEventListener('click', () => IDMT.exportWorkbook());
+    ['btn-add-property', 'btn-add-property-2'].forEach((id) => {
+      const b = document.getElementById(id);
+      if (b) b.addEventListener('click', () => {
+        if (!MAP_VIEWS.includes(activeView)) switchView('properties');
+        IDMT.detail.openNew();
+      });
+    });
+  }
+
+  function wireDock() {
+    const pops = { 'dock-layers-btn': 'dock-layers-pop', 'dock-types-btn': 'dock-types-pop' };
+    for (const [btnId, popId] of Object.entries(pops)) {
+      document.getElementById(btnId).addEventListener('click', () => {
+        const pop = document.getElementById(popId);
+        const wasOpen = pop.classList.contains('open');
+        document.querySelectorAll('.dock-pop').forEach((p) => p.classList.remove('open'));
+        document.querySelectorAll('.dock-btn').forEach((b) => pops[b.id] && b.classList.remove('active'));
+        if (!wasOpen) {
+          pop.classList.add('open');
+          document.getElementById(btnId).classList.add('active');
+        }
+      });
+    }
   }
 
   /* Drag-and-drop: preview a new workbook or boundary file locally without committing it. */
@@ -119,7 +207,8 @@ IDMT.app = (function () {
       IDMT.map.init();
       IDMT.search.attach();
       IDMT.propertiesView.attach();
-      wireFilterPanels();
+      wirePanels();
+      wireDock();
       wireDragDrop();
 
       document.querySelectorAll('.tab').forEach((t) =>
@@ -136,5 +225,5 @@ IDMT.app = (function () {
   }
 
   document.addEventListener('DOMContentLoaded', boot);
-  return { switchView };
+  return { switchView, renderActive };
 })();

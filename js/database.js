@@ -1,10 +1,11 @@
-/* database.js — CoStar-style market & submarket analytics, computed only from the uploaded
-   workbook. Sub-tabs (Overview, Capital Investment, Leasing, Development, Renovations,
-   Sales, Financing) are config-driven: each pulls its designated workbook columns. */
+/* database.js — analytics renderers shared by the function views.
+   Leasing / Investment Activity / Development are top-level views built from the
+   config-driven modules; Data → Market Data renders the tracked-inventory overview.
+   Reporting rules (Market_Analytics_Schema): every stat carries its n; thin summary
+   stats (n < 3) are suppressed with honest copy; tracked-set language throughout. */
 
 IDMT.database = (function () {
   let charts = {};
-  let activeModule = 'Overview';
   const INK = { primary: '#ffffff', secondary: '#c3c2b7', muted: '#898781', grid: '#2c2c2a', surface: '#1a1a19' };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -100,21 +101,11 @@ IDMT.database = (function () {
     return String(Math.round(v));
   }
 
-  /* ---------- sub-tab bar ---------- */
+  /* ---------- shared pieces ---------- */
 
-  function renderModuleTabs() {
-    const el = document.getElementById('db-module-tabs');
-    const names = ['Overview', ...Object.keys(IDMT.config.modules || {})];
-    el.innerHTML = names.map((n) => `<button class="chip module ${activeModule === n ? 'active' : ''}" data-mod="${esc(n)}">${esc(n)}</button>`).join('');
-    el.querySelectorAll('.chip').forEach((chip) => {
-      chip.addEventListener('click', () => { activeModule = chip.dataset.mod; render(); });
-    });
-  }
-
-  /* ---------- type chips ---------- */
-
-  function renderTypeFilter() {
-    const el = document.getElementById('db-type-filter');
+  /* Asset-class chips, rendered into any container (soloType drives global filters). */
+  function renderTypeChips(el) {
+    if (!el) return;
     const types = Object.keys(IDMT.typeColors);
     const visible = IDMT.filterEngine.visibleTypes();
     const allOn = visible.length === types.length;
@@ -129,28 +120,37 @@ IDMT.database = (function () {
     });
   }
 
-  /* ---------- overview (original dashboard) ---------- */
+  function metricCard(m) {
+    if (m.suppressed) {
+      return `<div class="card"><div class="k">${esc(m.label)}</div>
+        <div class="v suppressed">Not enough data for a summary (n = ${m.n})</div></div>`;
+    }
+    return `<div class="card"><div class="k">${esc(m.label)}</div>
+      <div class="v">${m.display}<span class="n">n=${m.n}</span></div></div>`;
+  }
 
-  function renderOverview() {
+  /* ---------- tracked-inventory overview (Data → Market Data) ---------- */
+
+  function renderOverview(body) {
+    if (!body) return;
     const { rows, totals, typeMix } = IDMT.aggregate();
     const nf = IDMT.filterEngine.activeCount();
-    const body = document.getElementById('db-module-body');
     body.innerHTML = `
       <div class="cards">
-        <div class="card"><div class="k">Properties</div><div class="v">${IDMT.fmt.int(totals.count)}</div><div class="s">${nf ? nf + ' filter' + (nf === 1 ? '' : 's') + ' applied' : 'all properties'}</div></div>
-        <div class="card"><div class="k">Total building SF</div><div class="v">${IDMT.fmt.int(totals.sf)}</div><div class="s">square feet tracked</div></div>
-        <div class="card"><div class="k">Avg occupancy</div><div class="v">${IDMT.fmt.pct(totals.avgOcc)}</div><div class="s">weighted by property</div></div>
-        <div class="card"><div class="k">Avg asking rent</div><div class="v">${totals.avgRent === null ? '—' : IDMT.fmt.usd(totals.avgRent)}</div><div class="s">per SF</div></div>
-        <div class="card"><div class="k">Submarkets</div><div class="v">${IDMT.fmt.int(totals.submarkets)}</div><div class="s">with mapped properties</div></div>
+        <div class="card"><div class="k">Tracked properties</div><div class="v">${IDMT.fmt.int(totals.count)}</div><div class="s">${nf ? nf + ' filter' + (nf === 1 ? '' : 's') + ' applied' : 'the denominator for every stat below'}</div></div>
+        <div class="card"><div class="k">Tracked building SF</div><div class="v">${IDMT.fmt.int(totals.sf)}</div><div class="s">square feet in the tracked set</div></div>
+        <div class="card"><div class="k">Avg occupancy — tracked</div><div class="v">${IDMT.fmt.pct(totals.avgOcc)}</div><div class="s">across tracked properties</div></div>
+        <div class="card"><div class="k">Avg asking rent — tracked</div><div class="v">${totals.avgRent === null ? '—' : IDMT.fmt.usd(totals.avgRent)}</div><div class="s">per SF, tracked set</div></div>
+        <div class="card"><div class="k">Submarkets</div><div class="v">${IDMT.fmt.int(totals.submarkets)}</div><div class="s">with tracked properties</div></div>
       </div>
       <div class="charts-grid">
-        <div class="chart-card"><h3>Building SF by submarket</h3><div class="chart-wrap"><canvas id="chart-sf"></canvas></div></div>
-        <div class="chart-card"><h3>Property type mix</h3><div class="chart-wrap"><canvas id="chart-mix"></canvas></div></div>
+        <div class="chart-card"><h3>Tracked SF by submarket</h3><div class="chart-wrap"><canvas id="chart-sf"></canvas></div></div>
+        <div class="chart-card"><h3>Property type mix — tracked</h3><div class="chart-wrap"><canvas id="chart-mix"></canvas></div></div>
         <div class="chart-card"><h3>Avg asking rent by submarket ($/SF)</h3><div class="chart-wrap"><canvas id="chart-rent"></canvas></div></div>
         <div class="chart-card"><h3>Avg occupancy by submarket (%)</h3><div class="chart-wrap"><canvas id="chart-occ"></canvas></div></div>
       </div>
       <div class="table-card">
-        <h3>Submarket summary</h3>
+        <h3>Submarket summary — tracked inventory</h3>
         <div class="table-scroll"><table id="submarket-table"></table></div>
       </div>`;
 
@@ -163,25 +163,25 @@ IDMT.database = (function () {
 
     const table = document.getElementById('submarket-table');
     table.innerHTML = `
-      <thead><tr><th>Submarket</th><th>Properties</th><th>Building SF</th><th>Avg year built</th><th>Avg occupancy</th><th>Avg rent ($/SF)</th></tr></thead>
+      <thead><tr><th>Submarket</th><th>Properties (n)</th><th>Building SF</th><th>Avg year built</th><th>Avg occupancy</th><th>Avg rent ($/SF)</th></tr></thead>
       <tbody>${rows.map((r) => `
         <tr data-sub="${esc(r.name)}">
           <td>${esc(r.name)}</td>
           <td>${IDMT.fmt.int(r.count)}</td>
           <td>${IDMT.fmt.int(r.sf)}</td>
           <td>${r.avgYear ?? '—'}</td>
-          <td>${IDMT.fmt.pct(r.avgOcc)}</td>
-          <td>${r.avgRent === null ? '—' : IDMT.fmt.usd(r.avgRent)}</td>
+          <td>${r.count < 3 ? '<span title="n < 3 — not enough data">·</span>' : IDMT.fmt.pct(r.avgOcc)}</td>
+          <td>${r.count < 3 ? '<span title="n < 3 — not enough data">·</span>' : (r.avgRent === null ? '—' : IDMT.fmt.usd(r.avgRent))}</td>
         </tr>`).join('')}</tbody>`;
     table.querySelectorAll('tbody tr').forEach((tr) => {
       tr.addEventListener('click', () => {
-        IDMT.app.switchView('map');
+        IDMT.app.switchView('markets');
         IDMT.map.focusSubmarket(tr.dataset.sub);
       });
     });
   }
 
-  /* ---------- generic module (Leasing, Sales, Financing, …) ---------- */
+  /* ---------- generic module page (Leasing, Sales, Financing, Development…) ---------- */
 
   function cellDisplay(p, col) {
     const v = p[col];
@@ -192,19 +192,16 @@ IDMT.database = (function () {
     return esc(v);
   }
 
-  function renderModule(name) {
+  function renderModule(body, name) {
     const mod = (IDMT.config.modules || {})[name];
-    if (!mod) return renderOverview();
+    if (!mod || !body) return;
     const { metrics, chart, rows, cols } = IDMT.moduleAggregate(mod);
-    const body = document.getElementById('db-module-body');
 
     body.innerHTML = `
-      <div class="cards">
-        ${metrics.map((m) => `<div class="card"><div class="k">${esc(m.label)}</div><div class="v">${m.display}</div></div>`).join('')}
-      </div>
-      ${chart ? `<div class="charts-grid"><div class="chart-card wide"><h3>${esc(chart.label)}</h3><div class="chart-wrap"><canvas id="chart-module"></canvas></div></div></div>` : ''}
+      <div class="cards">${metrics.map(metricCard).join('')}</div>
+      ${chart ? `<div class="charts-grid"><div class="chart-card wide"><h3>${esc(chart.label)} — tracked set</h3><div class="chart-wrap"><canvas id="chart-module"></canvas></div></div></div>` : ''}
       <div class="table-card">
-        <h3>${esc(name)} — property detail (${rows.length})</h3>
+        <h3>${esc(name)} — property records (n = ${rows.length})</h3>
         <div class="table-scroll"><table id="module-table"></table></div>
       </div>`;
 
@@ -224,21 +221,18 @@ IDMT.database = (function () {
         </tr>`).join('')}</tbody>`;
     table.querySelectorAll('tbody tr').forEach((tr) => {
       tr.addEventListener('click', () => {
-        IDMT.app.switchView('map');
+        IDMT.app.switchView('properties');
         IDMT.map.focusProperty(tr.dataset.id);
       });
     });
   }
 
-  function render() {
-    if (!IDMT.properties.length) return;
+  function prep() {
+    if (!IDMT.properties.length) return false;
     chartDefaults();
     destroyAll();
-    document.getElementById('db-title').textContent = IDMT.config.market.name + ' — Market Database';
-    renderModuleTabs();
-    renderTypeFilter();
-    activeModule === 'Overview' ? renderOverview() : renderModule(activeModule);
+    return true;
   }
 
-  return { render };
+  return { renderTypeChips, renderOverview, renderModule, prep };
 })();
