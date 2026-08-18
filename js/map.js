@@ -60,6 +60,8 @@ IDMT.map = (function () {
     // ready, instead of waiting for every basemap tile (which can stall on slow networks).
     map.on('style.load', () => {
       styleReady = true;
+      // directional light: strong face shading so extrusions read as 3D volumes
+      map.setLight({ anchor: 'viewport', color: '#ffffff', intensity: 0.45, position: [1.4, 105, 55] });
       addSatellite();
       addBuildings();
       addParcelTiles();
@@ -103,8 +105,13 @@ IDMT.map = (function () {
     map.setMaxBounds([[b[0][0] - pad, b[0][1] - pad], [b[1][0] + pad, b[1][1] + pad]]);
   }
 
+  /* ONE camera move at boot: refreshAdminData fits the MSA as soon as its geometry
+     arrives; this is only a fallback if the boundary file never loads. Two competing
+     fly animations was the load-time glitch. */
   function flyIntro() {
-    setTimeout(() => fitMSA(), 600);
+    setTimeout(() => {
+      if (!msaFitted) { msaFitted = true; fitMSA(); }
+    }, 3000);
   }
 
   /* ---------- base layers ---------- */
@@ -151,15 +158,17 @@ IDMT.map = (function () {
         'source-layer': srcLayer,
         minzoom: 14.3,
         paint: {
-          // dark-theme ramp: taller buildings read lighter so the skyline pops
+          // dark-theme ramp: taller buildings read lighter so the skyline pops.
+          // Kept bright enough to separate clearly from the near-black basemap.
           'fill-extrusion-color': [
             'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], ['get', 'height'], 12],
-            0, '#2e3138', 40, '#3d414b', 100, '#4d525e', 200, '#5d6370',
+            0, '#454b59', 40, '#59617a', 100, '#737e9e', 200, '#97a3c4',
           ],
           'fill-extrusion-height': buildingHeightExpr(1),
           'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0],
+          'fill-extrusion-vertical-gradient': true,
           // fade the skyline in over half a zoom level instead of popping
-          'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.4, 0, 15.1, 0.95],
+          'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.4, 0, 15.1, 1],
         },
       },
       firstSymbolLayerId()
@@ -384,10 +393,11 @@ IDMT.map = (function () {
     });
     map.addLayer({
       id: 'idmt-submarket-labels', type: 'symbol', source: 'idmt-submarket-labels',
+      minzoom: 10.3, // neighborhood-scale submarkets: labels only once the core fills the view
       layout: {
         'text-field': ['get', 'name'],
         'text-font': styleFont(),
-        'text-size': ['interpolate', ['linear'], ['zoom'], 9, 11.5, 13, 14],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 10.3, 11, 13, 14],
         'text-letter-spacing': 0.08,
         'text-transform': 'uppercase',
         // always place our labels — basemap labels must never knock submarket names off the map
