@@ -9,6 +9,7 @@ IDMT.map = (function () {
   let is3D = true;
   let orbiting = false;
   let buildingsGrown = false;
+  let msaFitted = false;
   let selectedId = null;
   let pulseRAF = null;
 
@@ -62,6 +63,7 @@ IDMT.map = (function () {
       addSatellite();
       addBuildings();
       addParcelTiles();
+      addAdminLayers();
       addBoundaryLayers();
       addPropertyLayers();
       map.moveLayer('idmt-submarket-labels'); // labels above pins — they must always read
@@ -79,14 +81,30 @@ IDMT.map = (function () {
     return map;
   }
 
-  function flyIntro() {
+  /* The MSA boundary defines the world: camera fits it, bounds lock to it. */
+  function msaBounds() {
+    return IDMT.admin && IDMT.admin.msa ? IDMT.fcBounds(IDMT.admin.msa) : null;
+  }
+
+  function fitMSA(opts = {}) {
+    const b = msaBounds();
     const m = IDMT.config.market;
-    setTimeout(() => {
-      map.flyTo({
-        center: m.center, zoom: m.zoom, pitch: m.pitch || 50, bearing: m.bearing || 0,
-        duration: 4000, essential: true,
-      });
-    }, 600);
+    if (b) {
+      map.fitBounds(b, Object.assign({ padding: 30, pitch: m.pitch || 50, bearing: m.bearing || 0, duration: 3500, essential: true }, opts));
+    } else {
+      map.flyTo(Object.assign({ center: m.center, zoom: m.zoom, pitch: m.pitch || 50, bearing: m.bearing || 0, duration: 3500, essential: true }, opts));
+    }
+  }
+
+  function applyMSABounds() {
+    const b = msaBounds();
+    if (!b) return;
+    const pad = 0.35; // degrees of slack so fitBounds + tilt never fight the lock
+    map.setMaxBounds([[b[0][0] - pad, b[0][1] - pad], [b[1][0] + pad, b[1][1] + pad]]);
+  }
+
+  function flyIntro() {
+    setTimeout(() => fitMSA(), 600);
   }
 
   /* ---------- base layers ---------- */
@@ -234,6 +252,103 @@ IDMT.map = (function () {
           rows.map(([k, v]) => `<div class="popup-sub"><b>${k}:</b> ${esc(v)}</div>`).join(''))
         .addTo(map);
     }
+  }
+
+  /* ---------- administrative boundaries: MSA / counties / cities ---------- */
+
+  function adminLabelPoints(fc) {
+    if (!fc) return emptyFC();
+    return {
+      type: 'FeatureCollection',
+      features: fc.features.map((f) => {
+        const c = polygonCentroid(f);
+        return c && { type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: { name: IDMT.featureName(f) } };
+      }).filter(Boolean),
+    };
+  }
+
+  function addAdminLayers() {
+    map.addSource('idmt-msa', { type: 'geojson', data: emptyFC() });
+    map.addSource('idmt-counties', { type: 'geojson', data: emptyFC() });
+    map.addSource('idmt-county-labels', { type: 'geojson', data: emptyFC() });
+    map.addSource('idmt-cities', { type: 'geojson', data: emptyFC() });
+    map.addSource('idmt-city-labels', { type: 'geojson', data: emptyFC() });
+
+    // MSA: the market's edge — always on, strong signature line
+    map.addLayer({
+      id: 'idmt-msa-glow', type: 'line', source: 'idmt-msa',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#3987e5', 'line-width': 9, 'line-opacity': 0.16, 'line-blur': 4 },
+    });
+    map.addLayer({
+      id: 'idmt-msa-line', type: 'line', source: 'idmt-msa',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': '#5c9bea',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 3.2],
+        'line-opacity': 0.9,
+      },
+    });
+
+    // Counties: neutral steel lines + small-caps labels (toggle, default off)
+    map.addLayer({
+      id: 'idmt-counties-line', type: 'line', source: 'idmt-counties',
+      layout: { visibility: 'none', 'line-join': 'round' },
+      paint: {
+        'line-color': '#8fa3b8',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.2, 12, 2],
+        'line-opacity': 0.75,
+        'line-dasharray': [4, 2],
+      },
+    });
+    map.addLayer({
+      id: 'idmt-county-labels', type: 'symbol', source: 'idmt-county-labels',
+      layout: {
+        visibility: 'none',
+        'text-field': ['get', 'name'],
+        'text-font': styleFont(),
+        'text-size': ['interpolate', ['linear'], ['zoom'], 8, 11, 12, 15],
+        'text-letter-spacing': 0.15,
+        'text-transform': 'uppercase',
+        'text-allow-overlap': true,
+      },
+      paint: { 'text-color': '#aebfd2', 'text-halo-color': '#0d0d0d', 'text-halo-width': 2 },
+    });
+
+    // Cities: finer teal lines + labels that auto-declutter (toggle, default off)
+    map.addLayer({
+      id: 'idmt-cities-line', type: 'line', source: 'idmt-cities',
+      layout: { visibility: 'none', 'line-join': 'round' },
+      paint: {
+        'line-color': '#4fae9d',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.8, 13, 1.6],
+        'line-opacity': 0.7,
+      },
+    });
+    map.addLayer({
+      id: 'idmt-city-labels', type: 'symbol', source: 'idmt-city-labels',
+      minzoom: 9,
+      layout: {
+        visibility: 'none',
+        'text-field': ['get', 'name'],
+        'text-font': styleFont(),
+        'text-size': ['interpolate', ['linear'], ['zoom'], 9, 10, 13, 12.5],
+        'text-transform': 'none',
+      },
+      paint: { 'text-color': '#8fd4c8', 'text-halo-color': '#0d0d0d', 'text-halo-width': 1.6 },
+    });
+  }
+
+  function refreshAdminData() {
+    if (!styleReady || !IDMT.admin) return;
+    const set = (src, data) => map.getSource(src) && map.getSource(src).setData(data || emptyFC());
+    set('idmt-msa', IDMT.admin.msa);
+    set('idmt-counties', IDMT.admin.counties);
+    set('idmt-county-labels', adminLabelPoints(IDMT.admin.counties));
+    set('idmt-cities', IDMT.admin.cities);
+    set('idmt-city-labels', adminLabelPoints(IDMT.admin.cities));
+    applyMSABounds();
+    if (!msaFitted && msaBounds()) { msaFitted = true; fitMSA(); }
   }
 
   /* ---------- boundaries ---------- */
@@ -408,6 +523,9 @@ IDMT.map = (function () {
 
   function wireControls() {
     toggle('lyr-3d', ['idmt-3d-buildings']);
+    toggle('lyr-msa', ['idmt-msa-glow', 'idmt-msa-line']);
+    toggle('lyr-counties', ['idmt-counties-line', 'idmt-county-labels']);
+    toggle('lyr-cities', ['idmt-cities-line', 'idmt-city-labels']);
     toggle('lyr-submarkets', ['idmt-submarkets-fill', 'idmt-submarkets-glow', 'idmt-submarkets-line', 'idmt-submarkets-highlight']);
     toggle('lyr-submarket-labels', ['idmt-submarket-labels']);
     toggle('lyr-parcels', ['idmt-parcels-fill', 'idmt-parcels-line']);
@@ -422,8 +540,7 @@ IDMT.map = (function () {
     });
     document.getElementById('btn-reset-view').addEventListener('click', () => {
       stopOrbit();
-      const m = IDMT.config.market;
-      map.flyTo({ center: m.center, zoom: m.zoom, pitch: is3D ? (m.pitch || 50) : 0, bearing: m.bearing || 0 });
+      fitMSA({ pitch: is3D ? (IDMT.config.market.pitch || 50) : 0 });
     });
     document.getElementById('btn-orbit').addEventListener('click', toggleOrbit);
     document.getElementById('btn-grow').addEventListener('click', () => { buildingsGrown = true; growBuildings(); });
@@ -481,6 +598,7 @@ IDMT.map = (function () {
     map.getSource('idmt-submarkets').setData(IDMT.submarkets || emptyFC());
     map.getSource('idmt-parcels').setData(IDMT.parcels || emptyFC());
     map.getSource('idmt-submarket-labels').setData(submarketLabelPoints());
+    refreshAdminData();
     renderTypeToggles();
   }
 

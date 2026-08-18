@@ -19,7 +19,7 @@
         45.85
       ]
     ],
-    "minZoom": 8
+    "minZoom": 7
   },
   "branding": {
     "appName": "Internal Data Market Tracker",
@@ -63,6 +63,23 @@
       "sourceLayer": "parcels",
       "minzoom": 14,
       "attribution": "Parcels: MetroGIS Regional Parcel Dataset (open data)"
+    },
+    "admin": {
+      "msa": {
+        "files": [
+          "data/boundaries/msa_boundary.kmz"
+        ]
+      },
+      "counties": {
+        "files": [
+          "data/boundaries/counties.kmz"
+        ]
+      },
+      "cities": {
+        "files": [
+          "data/boundaries/cities.kmz"
+        ]
+      }
     }
   },
   "fields": {

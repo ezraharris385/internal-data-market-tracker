@@ -219,8 +219,27 @@ IDMT.loadBoundaries = async function () {
     }
   }
   IDMT.parcels = await IDMT.loadBoundaryList(IDMT.config.layers.parcels);
+  // administrative boundaries: MSA outline, counties, cities
+  IDMT.admin = {};
+  for (const [key, cfg] of Object.entries(IDMT.config.layers.admin || {})) {
+    IDMT.admin[key] = await IDMT.loadBoundaryList(cfg.files || []);
+  }
   IDMT.refreshActiveSubmarkets();
   IDMT.assignSubmarkets();
+};
+
+/* bbox of a FeatureCollection: [[minX, minY], [maxX, maxY]] or null */
+IDMT.fcBounds = function (fc) {
+  if (!fc || !fc.features.length) return null;
+  let minX = 180, minY = 90, maxX = -180, maxY = -90;
+  const eat = (coords) => {
+    if (typeof coords[0] === 'number') {
+      minX = Math.min(minX, coords[0]); maxX = Math.max(maxX, coords[0]);
+      minY = Math.min(minY, coords[1]); maxY = Math.max(maxY, coords[1]);
+    } else coords.forEach(eat);
+  };
+  fc.features.forEach((f) => f.geometry && eat(f.geometry.coordinates));
+  return minX > maxX ? null : [[minX, minY], [maxX, maxY]];
 };
 
 /* The submarket set for a given asset type (falls back to default). */

@@ -1,0 +1,1141 @@
+{
+ "msa": {
+  "name": "Minneapolis-St. Paul-Bloomington MN-WI MSA",
+  "file": "msa/msa_boundary.kmz",
+  "source": "union of 16 Census 20m county polygons"
+ },
+ "counties": [
+  {
+   "name": "Anoka",
+   "fips": "27003",
+   "file": "counties/anoka_27003.kmz"
+  },
+  {
+   "name": "Carver",
+   "fips": "27019",
+   "file": "counties/carver_27019.kmz"
+  },
+  {
+   "name": "Chisago",
+   "fips": "27025",
+   "file": "counties/chisago_27025.kmz"
+  },
+  {
+   "name": "Dakota",
+   "fips": "27037",
+   "file": "counties/dakota_27037.kmz"
+  },
+  {
+   "name": "Hennepin",
+   "fips": "27053",
+   "file": "counties/hennepin_27053.kmz"
+  },
+  {
+   "name": "Isanti",
+   "fips": "27059",
+   "file": "counties/isanti_27059.kmz"
+  },
+  {
+   "name": "Le Sueur",
+   "fips": "27079",
+   "file": "counties/le_sueur_27079.kmz"
+  },
+  {
+   "name": "Mille Lacs",
+   "fips": "27095",
+   "file": "counties/mille_lacs_27095.kmz"
+  },
+  {
+   "name": "Pierce (WI)",
+   "fips": "55093",
+   "file": "counties/pierce_wi_55093.kmz"
+  },
+  {
+   "name": "Ramsey",
+   "fips": "27123",
+   "file": "counties/ramsey_27123.kmz"
+  },
+  {
+   "name": "Scott",
+   "fips": "27139",
+   "file": "counties/scott_27139.kmz"
+  },
+  {
+   "name": "Sherburne",
+   "fips": "27141",
+   "file": "counties/sherburne_27141.kmz"
+  },
+  {
+   "name": "Sibley",
+   "fips": "27143",
+   "file": "counties/sibley_27143.kmz"
+  },
+  {
+   "name": "St. Croix (WI)",
+   "fips": "55109",
+   "file": "counties/st_croix_wi_55109.kmz"
+  },
+  {
+   "name": "Washington",
+   "fips": "27163",
+   "file": "counties/washington_27163.kmz"
+  },
+  {
+   "name": "Wright",
+   "fips": "27171",
+   "file": "counties/wright_27171.kmz"
+  }
+ ],
+ "cities": [
+  {
+   "name": "Afton",
+   "geoid": "2700316",
+   "state": "MN",
+   "file": "cities/afton_2700316.kmz"
+  },
+  {
+   "name": "Albertville",
+   "geoid": "2700730",
+   "state": "MN",
+   "file": "cities/albertville_2700730.kmz"
+  },
+  {
+   "name": "Andover",
+   "geoid": "2701486",
+   "state": "MN",
+   "file": "cities/andover_2701486.kmz"
+  },
+  {
+   "name": "Annandale",
+   "geoid": "2701684",
+   "state": "MN",
+   "file": "cities/annandale_2701684.kmz"
+  },
+  {
+   "name": "Anoka",
+   "geoid": "2701720",
+   "state": "MN",
+   "file": "cities/anoka_2701720.kmz"
+  },
+  {
+   "name": "Apple Valley",
+   "geoid": "2701900",
+   "state": "MN",
+   "file": "cities/apple_valley_2701900.kmz"
+  },
+  {
+   "name": "Arden Hills",
+   "geoid": "2702026",
+   "state": "MN",
+   "file": "cities/arden_hills_2702026.kmz"
+  },
+  {
+   "name": "Arlington",
+   "geoid": "2702152",
+   "state": "MN",
+   "file": "cities/arlington_2702152.kmz"
+  },
+  {
+   "name": "Bayport",
+   "geoid": "2704114",
+   "state": "MN",
+   "file": "cities/bayport_2704114.kmz"
+  },
+  {
+   "name": "Becker",
+   "geoid": "2704618",
+   "state": "MN",
+   "file": "cities/becker_2704618.kmz"
+  },
+  {
+   "name": "Belle Plaine",
+   "geoid": "2704834",
+   "state": "MN",
+   "file": "cities/belle_plaine_2704834.kmz"
+  },
+  {
+   "name": "Bethel",
+   "geoid": "2705554",
+   "state": "MN",
+   "file": "cities/bethel_2705554.kmz"
+  },
+  {
+   "name": "Big Lake",
+   "geoid": "2705744",
+   "state": "MN",
+   "file": "cities/big_lake_2705744.kmz"
+  },
+  {
+   "name": "Birchwood Village",
+   "geoid": "2706058",
+   "state": "MN",
+   "file": "cities/birchwood_village_2706058.kmz"
+  },
+  {
+   "name": "Blaine",
+   "geoid": "2706382",
+   "state": "MN",
+   "file": "cities/blaine_2706382.kmz"
+  },
+  {
+   "name": "Bloomington",
+   "geoid": "2706616",
+   "state": "MN",
+   "file": "cities/bloomington_2706616.kmz"
+  },
+  {
+   "name": "Brooklyn Center",
+   "geoid": "2707948",
+   "state": "MN",
+   "file": "cities/brooklyn_center_2707948.kmz"
+  },
+  {
+   "name": "Brooklyn Park",
+   "geoid": "2707966",
+   "state": "MN",
+   "file": "cities/brooklyn_park_2707966.kmz"
+  },
+  {
+   "name": "Buffalo",
+   "geoid": "2708452",
+   "state": "MN",
+   "file": "cities/buffalo_2708452.kmz"
+  },
+  {
+   "name": "Burnsville",
+   "geoid": "2708794",
+   "state": "MN",
+   "file": "cities/burnsville_2708794.kmz"
+  },
+  {
+   "name": "Cambridge",
+   "geoid": "2709370",
+   "state": "MN",
+   "file": "cities/cambridge_2709370.kmz"
+  },
+  {
+   "name": "Carver",
+   "geoid": "2710144",
+   "state": "MN",
+   "file": "cities/carver_2710144.kmz"
+  },
+  {
+   "name": "Center City",
+   "geoid": "2710576",
+   "state": "MN",
+   "file": "cities/center_city_2710576.kmz"
+  },
+  {
+   "name": "Centerville",
+   "geoid": "2710648",
+   "state": "MN",
+   "file": "cities/centerville_2710648.kmz"
+  },
+  {
+   "name": "Champlin",
+   "geoid": "2710846",
+   "state": "MN",
+   "file": "cities/champlin_2710846.kmz"
+  },
+  {
+   "name": "Chanhassen",
+   "geoid": "2710918",
+   "state": "MN",
+   "file": "cities/chanhassen_2710918.kmz"
+  },
+  {
+   "name": "Chaska",
+   "geoid": "2710972",
+   "state": "MN",
+   "file": "cities/chaska_2710972.kmz"
+  },
+  {
+   "name": "Chisago City",
+   "geoid": "2711350",
+   "state": "MN",
+   "file": "cities/chisago_city_2711350.kmz"
+  },
+  {
+   "name": "Circle Pines",
+   "geoid": "2711494",
+   "state": "MN",
+   "file": "cities/circle_pines_2711494.kmz"
+  },
+  {
+   "name": "Coates",
+   "geoid": "2712376",
+   "state": "MN",
+   "file": "cities/coates_2712376.kmz"
+  },
+  {
+   "name": "Cokato",
+   "geoid": "2712430",
+   "state": "MN",
+   "file": "cities/cokato_2712430.kmz"
+  },
+  {
+   "name": "Cologne",
+   "geoid": "2712664",
+   "state": "MN",
+   "file": "cities/cologne_2712664.kmz"
+  },
+  {
+   "name": "Columbia Heights",
+   "geoid": "2712700",
+   "state": "MN",
+   "file": "cities/columbia_heights_2712700.kmz"
+  },
+  {
+   "name": "Columbus",
+   "geoid": "2712718",
+   "state": "MN",
+   "file": "cities/columbus_2712718.kmz"
+  },
+  {
+   "name": "Coon Rapids",
+   "geoid": "2713114",
+   "state": "MN",
+   "file": "cities/coon_rapids_2713114.kmz"
+  },
+  {
+   "name": "Corcoran",
+   "geoid": "2713168",
+   "state": "MN",
+   "file": "cities/corcoran_2713168.kmz"
+  },
+  {
+   "name": "Cottage Grove",
+   "geoid": "2713456",
+   "state": "MN",
+   "file": "cities/cottage_grove_2713456.kmz"
+  },
+  {
+   "name": "Crystal",
+   "geoid": "2714158",
+   "state": "MN",
+   "file": "cities/crystal_2714158.kmz"
+  },
+  {
+   "name": "Dayton",
+   "geoid": "2715022",
+   "state": "MN",
+   "file": "cities/dayton_2715022.kmz"
+  },
+  {
+   "name": "Deephaven",
+   "geoid": "2715148",
+   "state": "MN",
+   "file": "cities/deephaven_2715148.kmz"
+  },
+  {
+   "name": "Delano",
+   "geoid": "2715454",
+   "state": "MN",
+   "file": "cities/delano_2715454.kmz"
+  },
+  {
+   "name": "Dellwood",
+   "geoid": "2715616",
+   "state": "MN",
+   "file": "cities/dellwood_2715616.kmz"
+  },
+  {
+   "name": "Eagan",
+   "geoid": "2717288",
+   "state": "MN",
+   "file": "cities/eagan_2717288.kmz"
+  },
+  {
+   "name": "East Bethel",
+   "geoid": "2717486",
+   "state": "MN",
+   "file": "cities/east_bethel_2717486.kmz"
+  },
+  {
+   "name": "Eden Prairie",
+   "geoid": "2718116",
+   "state": "MN",
+   "file": "cities/eden_prairie_2718116.kmz"
+  },
+  {
+   "name": "Edina",
+   "geoid": "2718188",
+   "state": "MN",
+   "file": "cities/edina_2718188.kmz"
+  },
+  {
+   "name": "Elk River",
+   "geoid": "2718674",
+   "state": "MN",
+   "file": "cities/elk_river_2718674.kmz"
+  },
+  {
+   "name": "Elko New Market",
+   "geoid": "2718662",
+   "state": "MN",
+   "file": "cities/elko_new_market_2718662.kmz"
+  },
+  {
+   "name": "Excelsior",
+   "geoid": "2720078",
+   "state": "MN",
+   "file": "cities/excelsior_2720078.kmz"
+  },
+  {
+   "name": "Falcon Heights",
+   "geoid": "2720420",
+   "state": "MN",
+   "file": "cities/falcon_heights_2720420.kmz"
+  },
+  {
+   "name": "Farmington",
+   "geoid": "2720618",
+   "state": "MN",
+   "file": "cities/farmington_2720618.kmz"
+  },
+  {
+   "name": "Forest Lake",
+   "geoid": "2721770",
+   "state": "MN",
+   "file": "cities/forest_lake_2721770.kmz"
+  },
+  {
+   "name": "Fridley",
+   "geoid": "2722814",
+   "state": "MN",
+   "file": "cities/fridley_2722814.kmz"
+  },
+  {
+   "name": "Gaylord",
+   "geoid": "2723300",
+   "state": "MN",
+   "file": "cities/gaylord_2723300.kmz"
+  },
+  {
+   "name": "Gem Lake",
+   "geoid": "2723318",
+   "state": "MN",
+   "file": "cities/gem_lake_2723318.kmz"
+  },
+  {
+   "name": "Golden Valley",
+   "geoid": "2724308",
+   "state": "MN",
+   "file": "cities/golden_valley_2724308.kmz"
+  },
+  {
+   "name": "Grant",
+   "geoid": "2725334",
+   "state": "MN",
+   "file": "cities/grant_2725334.kmz"
+  },
+  {
+   "name": "Greenfield",
+   "geoid": "2725622",
+   "state": "MN",
+   "file": "cities/greenfield_2725622.kmz"
+  },
+  {
+   "name": "Ham Lake",
+   "geoid": "2726738",
+   "state": "MN",
+   "file": "cities/ham_lake_2726738.kmz"
+  },
+  {
+   "name": "Hanover",
+   "geoid": "2726990",
+   "state": "MN",
+   "file": "cities/hanover_2726990.kmz"
+  },
+  {
+   "name": "Harris",
+   "geoid": "2727278",
+   "state": "MN",
+   "file": "cities/harris_2727278.kmz"
+  },
+  {
+   "name": "Hastings",
+   "geoid": "2727530",
+   "state": "MN",
+   "file": "cities/hastings_2727530.kmz"
+  },
+  {
+   "name": "Henderson",
+   "geoid": "2728394",
+   "state": "MN",
+   "file": "cities/henderson_2728394.kmz"
+  },
+  {
+   "name": "Hilltop",
+   "geoid": "2729258",
+   "state": "MN",
+   "file": "cities/hilltop_2729258.kmz"
+  },
+  {
+   "name": "Hopkins",
+   "geoid": "2730140",
+   "state": "MN",
+   "file": "cities/hopkins_2730140.kmz"
+  },
+  {
+   "name": "Howard Lake",
+   "geoid": "2730284",
+   "state": "MN",
+   "file": "cities/howard_lake_2730284.kmz"
+  },
+  {
+   "name": "Hugo",
+   "geoid": "2730392",
+   "state": "MN",
+   "file": "cities/hugo_2730392.kmz"
+  },
+  {
+   "name": "Independence",
+   "geoid": "2730842",
+   "state": "MN",
+   "file": "cities/independence_2730842.kmz"
+  },
+  {
+   "name": "Inver Grove Heights",
+   "geoid": "2731076",
+   "state": "MN",
+   "file": "cities/inver_grove_heights_2731076.kmz"
+  },
+  {
+   "name": "Isanti",
+   "geoid": "2731328",
+   "state": "MN",
+   "file": "cities/isanti_2731328.kmz"
+  },
+  {
+   "name": "Jordan",
+   "geoid": "2732174",
+   "state": "MN",
+   "file": "cities/jordan_2732174.kmz"
+  },
+  {
+   "name": "Lake Elmo",
+   "geoid": "2734244",
+   "state": "MN",
+   "file": "cities/lake_elmo_2734244.kmz"
+  },
+  {
+   "name": "Lakeland",
+   "geoid": "2734622",
+   "state": "MN",
+   "file": "cities/lakeland_2734622.kmz"
+  },
+  {
+   "name": "Lakeville",
+   "geoid": "2735180",
+   "state": "MN",
+   "file": "cities/lakeville_2735180.kmz"
+  },
+  {
+   "name": "Landfall",
+   "geoid": "2735414",
+   "state": "MN",
+   "file": "cities/landfall_2735414.kmz"
+  },
+  {
+   "name": "Lauderdale",
+   "geoid": "2735738",
+   "state": "MN",
+   "file": "cities/lauderdale_2735738.kmz"
+  },
+  {
+   "name": "Le Center",
+   "geoid": "2736134",
+   "state": "MN",
+   "file": "cities/le_center_2736134.kmz"
+  },
+  {
+   "name": "Le Sueur",
+   "geoid": "2736746",
+   "state": "MN",
+   "file": "cities/le_sueur_2736746.kmz"
+  },
+  {
+   "name": "Lexington",
+   "geoid": "2736836",
+   "state": "MN",
+   "file": "cities/lexington_2736836.kmz"
+  },
+  {
+   "name": "Lilydale",
+   "geoid": "2737016",
+   "state": "MN",
+   "file": "cities/lilydale_2737016.kmz"
+  },
+  {
+   "name": "Lindstrom",
+   "geoid": "2737304",
+   "state": "MN",
+   "file": "cities/lindstrom_2737304.kmz"
+  },
+  {
+   "name": "Lino Lakes",
+   "geoid": "2737322",
+   "state": "MN",
+   "file": "cities/lino_lakes_2737322.kmz"
+  },
+  {
+   "name": "Little Canada",
+   "geoid": "2737502",
+   "state": "MN",
+   "file": "cities/little_canada_2737502.kmz"
+  },
+  {
+   "name": "Long Lake",
+   "geoid": "2738006",
+   "state": "MN",
+   "file": "cities/long_lake_2738006.kmz"
+  },
+  {
+   "name": "Mahtomedi",
+   "geoid": "2739428",
+   "state": "MN",
+   "file": "cities/mahtomedi_2739428.kmz"
+  },
+  {
+   "name": "Maple Grove",
+   "geoid": "2740166",
+   "state": "MN",
+   "file": "cities/maple_grove_2740166.kmz"
+  },
+  {
+   "name": "Maple Lake",
+   "geoid": "2740220",
+   "state": "MN",
+   "file": "cities/maple_lake_2740220.kmz"
+  },
+  {
+   "name": "Maple Plain",
+   "geoid": "2740256",
+   "state": "MN",
+   "file": "cities/maple_plain_2740256.kmz"
+  },
+  {
+   "name": "Maplewood",
+   "geoid": "2740382",
+   "state": "MN",
+   "file": "cities/maplewood_2740382.kmz"
+  },
+  {
+   "name": "Marine on St. Croix",
+   "geoid": "2740562",
+   "state": "MN",
+   "file": "cities/marine_on_st_croix_2740562.kmz"
+  },
+  {
+   "name": "Mayer",
+   "geoid": "2741138",
+   "state": "MN",
+   "file": "cities/mayer_2741138.kmz"
+  },
+  {
+   "name": "Medina",
+   "geoid": "2741480",
+   "state": "MN",
+   "file": "cities/medina_2741480.kmz"
+  },
+  {
+   "name": "Mendota",
+   "geoid": "2741678",
+   "state": "MN",
+   "file": "cities/mendota_2741678.kmz"
+  },
+  {
+   "name": "Mendota Heights",
+   "geoid": "2741696",
+   "state": "MN",
+   "file": "cities/mendota_heights_2741696.kmz"
+  },
+  {
+   "name": "Milaca",
+   "geoid": "2742110",
+   "state": "MN",
+   "file": "cities/milaca_2742110.kmz"
+  },
+  {
+   "name": "Minneapolis",
+   "geoid": "2743000",
+   "state": "MN",
+   "file": "cities/minneapolis_2743000.kmz"
+  },
+  {
+   "name": "Minnetonka",
+   "geoid": "2743252",
+   "state": "MN",
+   "file": "cities/minnetonka_2743252.kmz"
+  },
+  {
+   "name": "Minnetrista",
+   "geoid": "2743306",
+   "state": "MN",
+   "file": "cities/minnetrista_2743306.kmz"
+  },
+  {
+   "name": "Montgomery",
+   "geoid": "2743738",
+   "state": "MN",
+   "file": "cities/montgomery_2743738.kmz"
+  },
+  {
+   "name": "Monticello",
+   "geoid": "2743774",
+   "state": "MN",
+   "file": "cities/monticello_2743774.kmz"
+  },
+  {
+   "name": "Montrose",
+   "geoid": "2743810",
+   "state": "MN",
+   "file": "cities/montrose_2743810.kmz"
+  },
+  {
+   "name": "Mound",
+   "geoid": "2744476",
+   "state": "MN",
+   "file": "cities/mound_2744476.kmz"
+  },
+  {
+   "name": "Mounds View",
+   "geoid": "2744530",
+   "state": "MN",
+   "file": "cities/mounds_view_2744530.kmz"
+  },
+  {
+   "name": "New Brighton",
+   "geoid": "2745430",
+   "state": "MN",
+   "file": "cities/new_brighton_2745430.kmz"
+  },
+  {
+   "name": "New Hope",
+   "geoid": "2745628",
+   "state": "MN",
+   "file": "cities/new_hope_2745628.kmz"
+  },
+  {
+   "name": "New Prague",
+   "geoid": "2745808",
+   "state": "MN",
+   "file": "cities/new_prague_2745808.kmz"
+  },
+  {
+   "name": "Newport",
+   "geoid": "2745790",
+   "state": "MN",
+   "file": "cities/newport_2745790.kmz"
+  },
+  {
+   "name": "North Branch",
+   "geoid": "2746798",
+   "state": "MN",
+   "file": "cities/north_branch_2746798.kmz"
+  },
+  {
+   "name": "North Oaks",
+   "geoid": "2747104",
+   "state": "MN",
+   "file": "cities/north_oaks_2747104.kmz"
+  },
+  {
+   "name": "North St. Paul",
+   "geoid": "2747221",
+   "state": "MN",
+   "file": "cities/north_st_paul_2747221.kmz"
+  },
+  {
+   "name": "Norwood Young America",
+   "geoid": "2747520",
+   "state": "MN",
+   "file": "cities/norwood_young_america_2747520.kmz"
+  },
+  {
+   "name": "Nowthen",
+   "geoid": "2747536",
+   "state": "MN",
+   "file": "cities/nowthen_2747536.kmz"
+  },
+  {
+   "name": "Oak Grove",
+   "geoid": "2747690",
+   "state": "MN",
+   "file": "cities/oak_grove_2747690.kmz"
+  },
+  {
+   "name": "Oak Park Heights",
+   "geoid": "2747914",
+   "state": "MN",
+   "file": "cities/oak_park_heights_2747914.kmz"
+  },
+  {
+   "name": "Oakdale",
+   "geoid": "2747680",
+   "state": "MN",
+   "file": "cities/oakdale_2747680.kmz"
+  },
+  {
+   "name": "Orono",
+   "geoid": "2748580",
+   "state": "MN",
+   "file": "cities/orono_2748580.kmz"
+  },
+  {
+   "name": "Osseo",
+   "geoid": "2749012",
+   "state": "MN",
+   "file": "cities/osseo_2749012.kmz"
+  },
+  {
+   "name": "Otsego",
+   "geoid": "2749138",
+   "state": "MN",
+   "file": "cities/otsego_2749138.kmz"
+  },
+  {
+   "name": "Plymouth",
+   "geoid": "2751730",
+   "state": "MN",
+   "file": "cities/plymouth_2751730.kmz"
+  },
+  {
+   "name": "Princeton",
+   "geoid": "2752522",
+   "state": "MN",
+   "file": "cities/princeton_2752522.kmz"
+  },
+  {
+   "name": "Prior Lake",
+   "geoid": "2752594",
+   "state": "MN",
+   "file": "cities/prior_lake_2752594.kmz"
+  },
+  {
+   "name": "Ramsey",
+   "geoid": "2753026",
+   "state": "MN",
+   "file": "cities/ramsey_2753026.kmz"
+  },
+  {
+   "name": "Richfield",
+   "geoid": "2754214",
+   "state": "MN",
+   "file": "cities/richfield_2754214.kmz"
+  },
+  {
+   "name": "Robbinsdale",
+   "geoid": "2754808",
+   "state": "MN",
+   "file": "cities/robbinsdale_2754808.kmz"
+  },
+  {
+   "name": "Rockford",
+   "geoid": "2755006",
+   "state": "MN",
+   "file": "cities/rockford_2755006.kmz"
+  },
+  {
+   "name": "Rogers",
+   "geoid": "2755186",
+   "state": "MN",
+   "file": "cities/rogers_2755186.kmz"
+  },
+  {
+   "name": "Rosemount",
+   "geoid": "2755726",
+   "state": "MN",
+   "file": "cities/rosemount_2755726.kmz"
+  },
+  {
+   "name": "Roseville",
+   "geoid": "2755852",
+   "state": "MN",
+   "file": "cities/roseville_2755852.kmz"
+  },
+  {
+   "name": "Rush City",
+   "geoid": "2756266",
+   "state": "MN",
+   "file": "cities/rush_city_2756266.kmz"
+  },
+  {
+   "name": "Savage",
+   "geoid": "2758738",
+   "state": "MN",
+   "file": "cities/savage_2758738.kmz"
+  },
+  {
+   "name": "Scandia",
+   "geoid": "2758900",
+   "state": "MN",
+   "file": "cities/scandia_2758900.kmz"
+  },
+  {
+   "name": "Shafer",
+   "geoid": "2759314",
+   "state": "MN",
+   "file": "cities/shafer_2759314.kmz"
+  },
+  {
+   "name": "Shakopee",
+   "geoid": "2759350",
+   "state": "MN",
+   "file": "cities/shakopee_2759350.kmz"
+  },
+  {
+   "name": "Shoreview",
+   "geoid": "2759998",
+   "state": "MN",
+   "file": "cities/shoreview_2759998.kmz"
+  },
+  {
+   "name": "Shorewood",
+   "geoid": "2760016",
+   "state": "MN",
+   "file": "cities/shorewood_2760016.kmz"
+  },
+  {
+   "name": "South St. Paul",
+   "geoid": "2761492",
+   "state": "MN",
+   "file": "cities/south_st_paul_2761492.kmz"
+  },
+  {
+   "name": "Spring Lake Park",
+   "geoid": "2761996",
+   "state": "MN",
+   "file": "cities/spring_lake_park_2761996.kmz"
+  },
+  {
+   "name": "Spring Park",
+   "geoid": "2762014",
+   "state": "MN",
+   "file": "cities/spring_park_2762014.kmz"
+  },
+  {
+   "name": "St. Anthony",
+   "geoid": "2756698",
+   "state": "MN",
+   "file": "cities/st_anthony_2756698.kmz"
+  },
+  {
+   "name": "St. Bonifacius",
+   "geoid": "2756770",
+   "state": "MN",
+   "file": "cities/st_bonifacius_2756770.kmz"
+  },
+  {
+   "name": "St. Francis",
+   "geoid": "2756950",
+   "state": "MN",
+   "file": "cities/st_francis_2756950.kmz"
+  },
+  {
+   "name": "St. Louis Park",
+   "geoid": "2757220",
+   "state": "MN",
+   "file": "cities/st_louis_park_2757220.kmz"
+  },
+  {
+   "name": "St. Michael",
+   "geoid": "2757346",
+   "state": "MN",
+   "file": "cities/st_michael_2757346.kmz"
+  },
+  {
+   "name": "St. Paul",
+   "geoid": "2758000",
+   "state": "MN",
+   "file": "cities/st_paul_2758000.kmz"
+  },
+  {
+   "name": "St. Paul Park",
+   "geoid": "2758018",
+   "state": "MN",
+   "file": "cities/st_paul_park_2758018.kmz"
+  },
+  {
+   "name": "Stacy",
+   "geoid": "2762320",
+   "state": "MN",
+   "file": "cities/stacy_2762320.kmz"
+  },
+  {
+   "name": "Stillwater",
+   "geoid": "2762824",
+   "state": "MN",
+   "file": "cities/stillwater_2762824.kmz"
+  },
+  {
+   "name": "Sunfish Lake",
+   "geoid": "2763544",
+   "state": "MN",
+   "file": "cities/sunfish_lake_2763544.kmz"
+  },
+  {
+   "name": "Taylors Falls",
+   "geoid": "2764318",
+   "state": "MN",
+   "file": "cities/taylors_falls_2764318.kmz"
+  },
+  {
+   "name": "Tonka Bay",
+   "geoid": "2765164",
+   "state": "MN",
+   "file": "cities/tonka_bay_2765164.kmz"
+  },
+  {
+   "name": "Vadnais Heights",
+   "geoid": "2766460",
+   "state": "MN",
+   "file": "cities/vadnais_heights_2766460.kmz"
+  },
+  {
+   "name": "Vermillion",
+   "geoid": "2766802",
+   "state": "MN",
+   "file": "cities/vermillion_2766802.kmz"
+  },
+  {
+   "name": "Victoria",
+   "geoid": "2767036",
+   "state": "MN",
+   "file": "cities/victoria_2767036.kmz"
+  },
+  {
+   "name": "Waconia",
+   "geoid": "2767432",
+   "state": "MN",
+   "file": "cities/waconia_2767432.kmz"
+  },
+  {
+   "name": "Watertown",
+   "geoid": "2768548",
+   "state": "MN",
+   "file": "cities/watertown_2768548.kmz"
+  },
+  {
+   "name": "Waverly",
+   "geoid": "2768764",
+   "state": "MN",
+   "file": "cities/waverly_2768764.kmz"
+  },
+  {
+   "name": "Wayzata",
+   "geoid": "2768818",
+   "state": "MN",
+   "file": "cities/wayzata_2768818.kmz"
+  },
+  {
+   "name": "West St. Paul",
+   "geoid": "2769700",
+   "state": "MN",
+   "file": "cities/west_st_paul_2769700.kmz"
+  },
+  {
+   "name": "White Bear Lake",
+   "geoid": "2769970",
+   "state": "MN",
+   "file": "cities/white_bear_lake_2769970.kmz"
+  },
+  {
+   "name": "Willernie",
+   "geoid": "2770366",
+   "state": "MN",
+   "file": "cities/willernie_2770366.kmz"
+  },
+  {
+   "name": "Winthrop",
+   "geoid": "2771122",
+   "state": "MN",
+   "file": "cities/winthrop_2771122.kmz"
+  },
+  {
+   "name": "Woodbury",
+   "geoid": "2771428",
+   "state": "MN",
+   "file": "cities/woodbury_2771428.kmz"
+  },
+  {
+   "name": "Wyoming",
+   "geoid": "2772022",
+   "state": "MN",
+   "file": "cities/wyoming_2772022.kmz"
+  },
+  {
+   "name": "Zimmerman",
+   "geoid": "2772238",
+   "state": "MN",
+   "file": "cities/zimmerman_2772238.kmz"
+  },
+  {
+   "name": "Baldwin",
+   "geoid": "5504400",
+   "state": "WI",
+   "file": "cities/baldwin_5504400.kmz"
+  },
+  {
+   "name": "Ellsworth",
+   "geoid": "5523525",
+   "state": "WI",
+   "file": "cities/ellsworth_5523525.kmz"
+  },
+  {
+   "name": "Hammond",
+   "geoid": "5532325",
+   "state": "WI",
+   "file": "cities/hammond_5532325.kmz"
+  },
+  {
+   "name": "Hudson",
+   "geoid": "5536250",
+   "state": "WI",
+   "file": "cities/hudson_5536250.kmz"
+  },
+  {
+   "name": "New Richmond",
+   "geoid": "5557100",
+   "state": "WI",
+   "file": "cities/new_richmond_5557100.kmz"
+  },
+  {
+   "name": "North Hudson",
+   "geoid": "5558050",
+   "state": "WI",
+   "file": "cities/north_hudson_5558050.kmz"
+  },
+  {
+   "name": "Prescott",
+   "geoid": "5565375",
+   "state": "WI",
+   "file": "cities/prescott_5565375.kmz"
+  },
+  {
+   "name": "River Falls",
+   "geoid": "5568275",
+   "state": "WI",
+   "file": "cities/river_falls_5568275.kmz"
+  },
+  {
+   "name": "Roberts",
+   "geoid": "5568475",
+   "state": "WI",
+   "file": "cities/roberts_5568475.kmz"
+  },
+  {
+   "name": "Somerset",
+   "geoid": "5574675",
+   "state": "WI",
+   "file": "cities/somerset_5574675.kmz"
+  },
+  {
+   "name": "Woodville",
+   "geoid": "5589025",
+   "state": "WI",
+   "file": "cities/woodville_5589025.kmz"
+  }
+ ]
+}

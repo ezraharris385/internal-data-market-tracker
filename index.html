@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=0.8" />
+  <link rel="stylesheet" href="css/styles.css?v=0.9" />
 </head>
 <body>
   <header class="topbar">
@@ -47,6 +47,9 @@
     <div class="layers-panel" id="layers-panel">
       <div class="layers-title">Layers</div>
       <label class="layer-row"><input type="checkbox" id="lyr-3d" checked /> 3D buildings</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-msa" checked /> MSA boundary</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-counties" /> County boundaries</label>
+      <label class="layer-row"><input type="checkbox" id="lyr-cities" /> City boundaries</label>
       <label class="layer-row"><input type="checkbox" id="lyr-submarkets" checked /> Submarket boundaries</label>
       <label class="layer-row"><input type="checkbox" id="lyr-submarket-labels" checked /> Submarket labels</label>
       <label class="layer-row"><input type="checkbox" id="lyr-parcels" checked /> Property boundaries</label>
@@ -137,13 +140,13 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=0.8"></script>
-  <script src="js/filters.js?v=0.8"></script>
-  <script src="js/search.js?v=0.8"></script>
-  <script src="js/map.js?v=0.8"></script>
-  <script src="js/detail.js?v=0.8"></script>
-  <script src="js/database.js?v=0.8"></script>
-  <script src="js/properties.js?v=0.8"></script>
-  <script src="js/app.js?v=0.8"></script>
+  <script src="js/data.js?v=0.9"></script>
+  <script src="js/filters.js?v=0.9"></script>
+  <script src="js/search.js?v=0.9"></script>
+  <script src="js/map.js?v=0.9"></script>
+  <script src="js/detail.js?v=0.9"></script>
+  <script src="js/database.js?v=0.9"></script>
+  <script src="js/properties.js?v=0.9"></script>
+  <script src="js/app.js?v=0.9"></script>
 </body>
 </html>
