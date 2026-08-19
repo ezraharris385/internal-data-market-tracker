@@ -17,11 +17,22 @@ IDMT.filterEngine = (function () {
   IDMT.filters = state;
 
   /* Activity categories: what a property must show to appear under each lens */
+  const yearOf = (v) => { const y = parseInt(String(v ?? '').slice(0, 4), 10); return Number.isFinite(y) ? y : null; };
+  const THIS_YEAR = new Date().getFullYear();
   const CATEGORIES = {
     'Leasing': (p) => (IDMT.num(p['Available SF']) || 0) > 0,
     'Investment Activity': (p) =>
       ['Last Sale Price', 'Loan Amount ($)', 'CapEx Budget ($)'].some((c) => String(p[c] ?? '').trim() !== ''),
     'Development': (p) => ['Under Construction', 'Proposed'].includes(String(p['Status'] ?? '').trim()),
+    'Recently Sold': (p) => {
+      const y = yearOf(p['Last Sale Date']);
+      return y !== null && y >= THIS_YEAR - 2 && String(p['Last Sale Price'] ?? '').trim() !== '';
+    },
+    'Debt Maturing': (p) => {
+      const y = yearOf(p['Loan Maturity']);
+      return y !== null && y >= THIS_YEAR && y <= THIS_YEAR + 2 && String(p['Loan Amount ($)'] ?? '').trim() !== '';
+    },
+    'High Vacancy': (p) => p._occ !== null && p._occ < 80,
   };
 
   function setCategory(c) {

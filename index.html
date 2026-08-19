@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1.5" />
+  <link rel="stylesheet" href="css/styles.css?v=1.6" />
 </head>
 <body class="mode-properties">
   <header class="topbar">
@@ -105,6 +105,20 @@
     </aside>
   </main>
 
+  <!-- ============ MARKETS (dataset presentation) ============ -->
+  <main id="view-markets" class="view">
+    <div class="page">
+      <div class="page-head"><h1>Markets</h1><p class="page-sub">Cumulative submarket data from tracked properties — every stat rolls up from individual records.</p></div>
+      <div class="filter-row">
+        <div class="filter-row module-tabs" id="markets-presentation" style="margin:0"></div>
+        <button class="filters-btn" id="markets-filters-btn">Advanced filters</button>
+      </div>
+      <div class="filters-panel inline" id="markets-filters-panel"></div>
+      <div class="filter-row" id="markets-type-chips"></div>
+      <div id="markets-body"></div>
+    </div>
+  </main>
+
   <!-- ============ DATA ============ -->
   <main id="view-data" class="view">
     <div class="page">
@@ -157,13 +171,13 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=1.5"></script>
-  <script src="js/filters.js?v=1.5"></script>
-  <script src="js/search.js?v=1.5"></script>
-  <script src="js/map.js?v=1.5"></script>
-  <script src="js/detail.js?v=1.5"></script>
-  <script src="js/database.js?v=1.5"></script>
-  <script src="js/properties.js?v=1.5"></script>
-  <script src="js/app.js?v=1.5"></script>
+  <script src="js/data.js?v=1.6"></script>
+  <script src="js/filters.js?v=1.6"></script>
+  <script src="js/search.js?v=1.6"></script>
+  <script src="js/map.js?v=1.6"></script>
+  <script src="js/detail.js?v=1.6"></script>
+  <script src="js/database.js?v=1.6"></script>
+  <script src="js/properties.js?v=1.6"></script>
+  <script src="js/app.js?v=1.6"></script>
 </body>
 </html>

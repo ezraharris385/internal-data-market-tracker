@@ -42,7 +42,7 @@ IDMT.search = (function () {
       index.push({
         kind: 'Submarket', label: name, sub: 'Submarket boundary',
         text: name.toLowerCase(), color: '#9085e9', square: true,
-        action: () => { IDMT.app.switchView('markets'); IDMT.map.focusSubmarket(name); },
+        action: () => { IDMT.app.showSubmarketOnMap(name); },
       });
     }
     const distinct = (get) => [...new Set(IDMT.properties.map(get).filter(Boolean))].sort();

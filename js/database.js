@@ -175,8 +175,7 @@ IDMT.database = (function () {
         </tr>`).join('')}</tbody>`;
     table.querySelectorAll('tbody tr').forEach((tr) => {
       tr.addEventListener('click', () => {
-        IDMT.app.switchView('markets');
-        IDMT.map.focusSubmarket(tr.dataset.sub);
+        IDMT.app.showSubmarketOnMap(tr.dataset.sub);
       });
     });
   }
@@ -227,6 +226,55 @@ IDMT.database = (function () {
     });
   }
 
+  /* Markets dataset: one row per submarket, everything rolled up from properties */
+  function renderMarketsDataset(body) {
+    if (!body) return;
+    const props = IDMT.filteredProperties();
+    const bySub = {};
+    for (const p of props) {
+      const key = p._submarket || 'Unassigned';
+      const s = (bySub[key] = bySub[key] || { name: key, n: 0, sf: 0, occS: 0, occN: 0, rentS: 0, rentN: 0, avail: 0, saleVol: 0, pipeline: 0 });
+      s.n += 1;
+      s.sf += p._size || 0;
+      if (p._occ !== null) { s.occS += p._occ; s.occN += 1; }
+      if (p._rent !== null) { s.rentS += p._rent; s.rentN += 1; }
+      s.avail += IDMT.num(p['Available SF']) || 0;
+      s.saleVol += IDMT.num(p['Last Sale Price']) || 0;
+      if (['Under Construction', 'Proposed'].includes(String(p['Status'] ?? '').trim())) s.pipeline += p._size || 0;
+    }
+    const rows = Object.values(bySub).sort((a, b) => b.sf - a.sf);
+    const t = rows.reduce((a, r) => ({ n: a.n + r.n, sf: a.sf + r.sf, avail: a.avail + r.avail, vol: a.vol + r.saleVol, pipe: a.pipe + r.pipeline }), { n: 0, sf: 0, avail: 0, vol: 0, pipe: 0 });
+
+    body.innerHTML = `
+      <div class="cards">
+        <div class="card"><div class="k">Tracked properties</div><div class="v">${IDMT.fmt.int(t.n)}</div></div>
+        <div class="card"><div class="k">Tracked SF</div><div class="v">${IDMT.fmt.int(t.sf)}</div></div>
+        <div class="card"><div class="k">Available SF</div><div class="v">${IDMT.fmt.int(t.avail)}</div></div>
+        <div class="card"><div class="k">Sale volume — tracked</div><div class="v">${shortMoney(t.vol)}</div></div>
+        <div class="card"><div class="k">Pipeline SF</div><div class="v">${IDMT.fmt.int(t.pipe)}</div></div>
+      </div>
+      <div class="table-card">
+        <h3>Submarkets — cumulative from tracked records (click to view on the map)</h3>
+        <div class="table-scroll"><table id="markets-table">
+          <thead><tr><th>Submarket</th><th>Properties (n)</th><th>Building SF</th><th>Avg occupancy</th><th>Avg rent ($/SF)</th><th>Available SF</th><th>Sale volume</th><th>Pipeline SF</th></tr></thead>
+          <tbody>${rows.map((r) => `
+            <tr data-sub="${esc(r.name)}">
+              <td>${esc(r.name)}</td>
+              <td>${r.n}</td>
+              <td>${IDMT.fmt.int(r.sf)}</td>
+              <td>${r.n < 3 ? '<span title="n < 3 — not enough data">·</span>' : IDMT.fmt.pct(r.occN ? r.occS / r.occN : null)}</td>
+              <td>${r.n < 3 ? '<span title="n < 3 — not enough data">·</span>' : (r.rentN ? IDMT.fmt.usd(r.rentS / r.rentN) : '—')}</td>
+              <td>${IDMT.fmt.int(r.avail)}</td>
+              <td>${r.saleVol ? shortMoney(r.saleVol) : '—'}</td>
+              <td>${r.pipeline ? IDMT.fmt.int(r.pipeline) : '—'}</td>
+            </tr>`).join('')}</tbody>
+        </table></div>
+      </div>`;
+    body.querySelectorAll('#markets-table tbody tr').forEach((tr) => {
+      tr.addEventListener('click', () => IDMT.app.showSubmarketOnMap(tr.dataset.sub));
+    });
+  }
+
   function prep() {
     if (!IDMT.properties.length) return false;
     chartDefaults();
@@ -234,5 +282,5 @@ IDMT.database = (function () {
     return true;
   }
 
-  return { renderTypeChips, renderOverview, renderModule, prep };
+  return { renderTypeChips, renderOverview, renderModule, renderMarketsDataset, prep };
 })();

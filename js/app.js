@@ -7,8 +7,12 @@ IDMT.app = (function () {
   let activeView = 'properties';
   let dataSubtab = 'Properties';
   let investmentModule = 'Sales';
-  const MAP_VIEWS = ['properties', 'parcels', 'markets'];
+  let marketsPresentation = 'Dataset'; // Markets leads with data; 'Map view' is the option
   const DATA_SUBTABS = ['Properties', 'Market Data', 'Leasing', 'Investment Activity', 'Development'];
+
+  function isMapView(name) {
+    return name === 'properties' || name === 'parcels' || (name === 'markets' && marketsPresentation === 'Map view');
+  }
 
   function status(msg, isError) {
     const el = document.getElementById('data-status');
@@ -21,7 +25,7 @@ IDMT.app = (function () {
   function switchView(name) {
     activeView = name;
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
-    const isMap = MAP_VIEWS.includes(name);
+    const isMap = isMapView(name);
     document.querySelectorAll('.view').forEach((v) => {
       v.classList.toggle('active', isMap ? v.id === 'view-map' : v.id === 'view-' + name);
     });
@@ -34,13 +38,27 @@ IDMT.app = (function () {
     renderActive();
   }
 
+  /* from the Markets dataset: jump to the map presentation zoomed on a submarket */
+  function showSubmarketOnMap(name) {
+    marketsPresentation = 'Map view';
+    switchView('markets');
+    IDMT.map.focusSubmarket(name);
+  }
+
   /* re-render whatever the user is looking at */
   function renderActive() {
     renderCategoryChips();
-    if (MAP_VIEWS.includes(activeView)) {
-      if (activeView === 'markets') renderMarketsPanel();
+    if (activeView === 'markets') {
+      renderMarketsPresentation();
+      if (marketsPresentation === 'Map view') {
+        renderMarketsPanel();
+      } else if (IDMT.database.prep()) {
+        IDMT.database.renderTypeChips(document.getElementById('markets-type-chips'));
+        IDMT.database.renderMarketsDataset(document.getElementById('markets-body'));
+      }
       return;
     }
+    if (isMapView(activeView)) return;
     if (activeView !== 'data' || !IDMT.database.prep()) return;
     IDMT.database.renderTypeChips(document.getElementById('db-type-filter'));
     renderDataSubtabs();
@@ -70,6 +88,11 @@ IDMT.app = (function () {
 
   function renderDataSubtabs() {
     chipRow(document.getElementById('data-subtabs'), DATA_SUBTABS, dataSubtab, (m) => { dataSubtab = m; renderActive(); });
+  }
+
+  function renderMarketsPresentation() {
+    const el = document.getElementById('markets-presentation');
+    if (el) chipRow(el, ['Dataset', 'Map view'], marketsPresentation, (m) => { marketsPresentation = m; switchView('markets'); });
   }
 
   function renderInvestmentChips() {
@@ -108,6 +131,7 @@ IDMT.app = (function () {
       <div class="mp-head">
         <div class="mp-title">Submarkets — tracked inventory</div>
         <div class="mp-totals">${IDMT.fmt.int(totals.count)} properties · ${IDMT.fmt.int(totals.sf)} SF</div>
+        <button class="btn-ghost sm" id="mp-back" style="margin-top:7px;width:auto">◀ Back to dataset</button>
       </div>
       ${rows.map((r) => `
         <div class="mp-row" data-sub="${esc(r.name)}">
@@ -123,6 +147,8 @@ IDMT.app = (function () {
     el.querySelectorAll('.mp-row').forEach((row) => {
       row.addEventListener('click', () => IDMT.map.focusSubmarket(row.dataset.sub));
     });
+    const back = document.getElementById('mp-back');
+    if (back) back.addEventListener('click', () => { marketsPresentation = 'Dataset'; switchView('markets'); });
   }
 
   /* ---------- shared refresh ---------- */
@@ -139,6 +165,7 @@ IDMT.app = (function () {
   const PANELS = [
     ['map-filters-btn', 'map-filters-panel', 'Filters'],
     ['db-filters-btn', 'db-filters-panel', 'Advanced filters'],
+    ['markets-filters-btn', 'markets-filters-panel', 'Advanced filters'],
   ];
 
   function renderFilterPanels() {
@@ -188,7 +215,7 @@ IDMT.app = (function () {
     ['btn-add-property', 'btn-add-property-2'].forEach((id) => {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => {
-        if (!MAP_VIEWS.includes(activeView)) switchView('properties');
+        if (!isMapView(activeView)) switchView('properties');
         IDMT.detail.openNew();
       });
     });
@@ -277,5 +304,5 @@ IDMT.app = (function () {
   }
 
   document.addEventListener('DOMContentLoaded', boot);
-  return { switchView, renderActive };
+  return { switchView, renderActive, showSubmarketOnMap };
 })();
