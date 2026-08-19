@@ -12,8 +12,24 @@ IDMT.filterEngine = (function () {
     multi: {},                // col -> Set(selected values); absent col = no constraint
     range: {},                // col -> [min|null, max|null]
     text: '',
+    category: '',             // '' = all | Leasing | Investment Activity | Development
   };
   IDMT.filters = state;
+
+  /* Activity categories: what a property must show to appear under each lens */
+  const CATEGORIES = {
+    'Leasing': (p) => (IDMT.num(p['Available SF']) || 0) > 0,
+    'Investment Activity': (p) =>
+      ['Last Sale Price', 'Loan Amount ($)', 'CapEx Budget ($)'].some((c) => String(p[c] ?? '').trim() !== ''),
+    'Development': (p) => ['Under Construction', 'Proposed'].includes(String(p['Status'] ?? '').trim()),
+  };
+
+  function setCategory(c) {
+    state.category = state.category === c ? '' : (c || '');
+    notify();
+  }
+
+  function categoryNames() { return Object.keys(CATEGORIES); }
 
   function fieldDefs() {
     const s = IDMT.config.schema || {};
@@ -55,6 +71,7 @@ IDMT.filterEngine = (function () {
 
   function matches(p) {
     if (state.hiddenTypes.has(p._type)) return false;
+    if (state.category && CATEGORIES[state.category] && !CATEGORIES[state.category](p)) return false;
     if (state.text) {
       const q = state.text.toLowerCase();
       const hay = (p._name + ' ' + p._address + ' ' + p._city + ' ' + p._submarket + ' ' + p._type + ' ' + p._id).toLowerCase();
@@ -215,5 +232,5 @@ IDMT.filterEngine = (function () {
     container.scrollTop = scroll;
   }
 
-  return { matches, activeCount, clearAll, setTypeHidden, soloType, renderPanel, visibleTypes };
+  return { matches, activeCount, clearAll, setTypeHidden, soloType, renderPanel, visibleTypes, setCategory, categoryNames };
 })();

@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1.1" />
+  <link rel="stylesheet" href="css/styles.css?v=1.2" />
 </head>
 <body class="mode-properties">
   <header class="topbar">
@@ -20,9 +20,6 @@
     <nav class="tabs" id="tabs">
       <button class="tab active" data-view="properties">Properties</button>
       <button class="tab" data-view="markets">Markets</button>
-      <button class="tab" data-view="leasing">Leasing</button>
-      <button class="tab" data-view="investment">Investment Activity</button>
-      <button class="tab" data-view="development">Development</button>
       <button class="tab" data-view="data">Data</button>
     </nav>
     <div class="data-status" id="data-status">loading data…</div>
@@ -45,6 +42,7 @@
       </div>
       <div class="search-suggestions" id="search-suggestions"></div>
       <div class="filters-panel" id="map-filters-panel"></div>
+      <div class="cat-chips" id="category-chips"></div>
     </div>
 
     <!-- Bottom-left dock: everything mapping / view related -->
@@ -80,42 +78,14 @@
       </div>
     </div>
 
+    <!-- Markets: cumulative submarket roll-up -->
+    <aside class="markets-panel markets-only" id="markets-panel"></aside>
+
     <!-- Property detail drawer -->
     <aside class="detail-drawer" id="detail-drawer">
       <button class="drawer-close" id="drawer-close">✕</button>
       <div class="drawer-content" id="drawer-content"></div>
     </aside>
-  </main>
-
-  <!-- ============ LEASING ============ -->
-  <main id="view-leasing" class="view">
-    <div class="page">
-      <div class="page-head"><h1>Leasing</h1><p class="page-sub">Availability, rents, and lease terms across tracked properties.</p></div>
-      <div class="filter-row"><div id="leasing-chips" class="chips-inline"></div><button class="filters-btn" id="leasing-filters-btn">Advanced filters</button></div>
-      <div class="filters-panel inline" id="leasing-filters-panel"></div>
-      <div id="leasing-body"></div>
-    </div>
-  </main>
-
-  <!-- ============ INVESTMENT ACTIVITY ============ -->
-  <main id="view-investment" class="view">
-    <div class="page">
-      <div class="page-head"><h1>Investment Activity</h1><p class="page-sub">Sales, financing, and capital investment across tracked properties.</p></div>
-      <div class="filter-row"><div id="investment-chips" class="chips-inline"></div><button class="filters-btn" id="investment-filters-btn">Advanced filters</button></div>
-      <div class="filters-panel inline" id="investment-filters-panel"></div>
-      <div class="filter-row module-tabs" id="investment-modchips"></div>
-      <div id="investment-body"></div>
-    </div>
-  </main>
-
-  <!-- ============ DEVELOPMENT ============ -->
-  <main id="view-development" class="view">
-    <div class="page">
-      <div class="page-head"><h1>Development</h1><p class="page-sub">Tracked pipeline — under construction and proposed.</p></div>
-      <div class="filter-row"><div id="development-chips" class="chips-inline"></div><button class="filters-btn" id="development-filters-btn">Advanced filters</button></div>
-      <div class="filters-panel inline" id="development-filters-panel"></div>
-      <div id="development-body"></div>
-    </div>
   </main>
 
   <!-- ============ DATA ============ -->
@@ -170,13 +140,13 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=1.1"></script>
-  <script src="js/filters.js?v=1.1"></script>
-  <script src="js/search.js?v=1.1"></script>
-  <script src="js/map.js?v=1.1"></script>
-  <script src="js/detail.js?v=1.1"></script>
-  <script src="js/database.js?v=1.1"></script>
-  <script src="js/properties.js?v=1.1"></script>
-  <script src="js/app.js?v=1.1"></script>
+  <script src="js/data.js?v=1.2"></script>
+  <script src="js/filters.js?v=1.2"></script>
+  <script src="js/search.js?v=1.2"></script>
+  <script src="js/map.js?v=1.2"></script>
+  <script src="js/detail.js?v=1.2"></script>
+  <script src="js/database.js?v=1.2"></script>
+  <script src="js/properties.js?v=1.2"></script>
+  <script src="js/app.js?v=1.2"></script>
 </body>
 </html>

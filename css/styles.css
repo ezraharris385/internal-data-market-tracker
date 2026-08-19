@@ -250,6 +250,31 @@ body.mode-properties .markets-only { display: none; }
 .filters-btn.add:hover { filter: brightness(1.12); }
 .chips-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
+/* activity-category lens chips on the map */
+.cat-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.cat-chips .chip {
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+  background: var(--surface-1); font-size: 12px; padding: 6px 12px;
+}
+.cat-chips .chip.active { border-color: var(--accent); background: var(--surface-2); color: var(--text-primary); }
+
+/* Markets: cumulative submarket roll-up panel */
+.markets-panel {
+  position: absolute; top: 14px; right: 14px; z-index: 20;
+  width: 320px; max-height: calc(100% - 70px); overflow-y: auto;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+.mp-head { padding: 13px 15px 9px; border-bottom: 1px solid var(--grid); position: sticky; top: 0; background: var(--surface-1); }
+.mp-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-secondary); }
+.mp-totals { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.mp-row { padding: 9px 15px; border-bottom: 1px solid var(--grid); cursor: pointer; }
+.mp-row:hover { background: var(--surface-2); }
+.mp-name { font-size: 13px; font-weight: 600; }
+.mp-stats { display: flex; gap: 10px; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.mp-foot { padding: 8px 15px; font-size: 10.5px; color: var(--text-muted); }
+body.presentation .markets-panel { display: none; }
+
 /* property page category sections */
 .detail-cat { border: 1px solid var(--grid); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
 .detail-cat summary {

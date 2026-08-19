@@ -1,13 +1,14 @@
-/* app.js — boot sequence, function-view navigation, dock wiring, drag-and-drop preview.
-   Views: Properties + Markets share the map (Markets shows boundary visuals);
-   Leasing / Investment Activity / Development are module dashboards;
-   Data holds the Properties grid + Market Data sub-tabs. */
+/* app.js — boot sequence, navigation, dock wiring, drag-and-drop preview.
+   Views: Properties + Markets share the map (Markets adds boundary visuals and the
+   cumulative submarket roll-up panel); activity categories (Leasing / Investment
+   Activity / Development) are FILTERS on the map; the datasets live under Data. */
 
 IDMT.app = (function () {
   let activeView = 'properties';
   let dataSubtab = 'Properties';
   let investmentModule = 'Sales';
   const MAP_VIEWS = ['properties', 'markets'];
+  const DATA_SUBTABS = ['Properties', 'Market Data', 'Leasing', 'Investment Activity', 'Development'];
 
   function status(msg, isError) {
     const el = document.getElementById('data-status');
@@ -35,26 +36,30 @@ IDMT.app = (function () {
 
   /* re-render whatever the user is looking at */
   function renderActive() {
-    if (MAP_VIEWS.includes(activeView)) return; // map renders reactively on its own
-    if (!IDMT.database.prep()) return;
-    if (activeView === 'leasing') {
-      IDMT.database.renderTypeChips(document.getElementById('leasing-chips'));
-      IDMT.database.renderModule(document.getElementById('leasing-body'), 'Leasing');
-    } else if (activeView === 'development') {
-      IDMT.database.renderTypeChips(document.getElementById('development-chips'));
-      IDMT.database.renderModule(document.getElementById('development-body'), 'Development');
-    } else if (activeView === 'investment') {
-      IDMT.database.renderTypeChips(document.getElementById('investment-chips'));
+    renderCategoryChips();
+    if (MAP_VIEWS.includes(activeView)) {
+      if (activeView === 'markets') renderMarketsPanel();
+      return;
+    }
+    if (activeView !== 'data' || !IDMT.database.prep()) return;
+    IDMT.database.renderTypeChips(document.getElementById('db-type-filter'));
+    renderDataSubtabs();
+    const staleBar = document.getElementById('invest-modchips');
+    if (staleBar) staleBar.style.display = dataSubtab === 'Investment Activity' ? '' : 'none';
+    const props = dataSubtab === 'Properties';
+    document.getElementById('data-properties').style.display = props ? '' : 'none';
+    document.getElementById('data-market').style.display = props ? 'none' : '';
+    if (props) {
+      IDMT.propertiesView.render();
+    } else if (dataSubtab === 'Market Data') {
+      IDMT.database.renderOverview(document.getElementById('db-module-body'));
+    } else if (dataSubtab === 'Leasing') {
+      IDMT.database.renderModule(document.getElementById('db-module-body'), 'Leasing');
+    } else if (dataSubtab === 'Development') {
+      IDMT.database.renderModule(document.getElementById('db-module-body'), 'Development');
+    } else if (dataSubtab === 'Investment Activity') {
       renderInvestmentChips();
-      IDMT.database.renderModule(document.getElementById('investment-body'), investmentModule);
-    } else if (activeView === 'data') {
-      IDMT.database.renderTypeChips(document.getElementById('db-type-filter'));
-      renderDataSubtabs();
-      const props = dataSubtab === 'Properties';
-      document.getElementById('data-properties').style.display = props ? '' : 'none';
-      document.getElementById('data-market').style.display = props ? 'none' : '';
-      if (props) IDMT.propertiesView.render();
-      else IDMT.database.renderOverview(document.getElementById('db-module-body'));
+      IDMT.database.renderModule(document.getElementById('db-module-body'), investmentModule, { keepChips: true });
     }
   }
 
@@ -64,11 +69,60 @@ IDMT.app = (function () {
   }
 
   function renderDataSubtabs() {
-    chipRow(document.getElementById('data-subtabs'), ['Properties', 'Market Data'], dataSubtab, (m) => { dataSubtab = m; renderActive(); });
+    chipRow(document.getElementById('data-subtabs'), DATA_SUBTABS, dataSubtab, (m) => { dataSubtab = m; renderActive(); });
   }
 
   function renderInvestmentChips() {
-    chipRow(document.getElementById('investment-modchips'), ['Sales', 'Financing', 'Capital Investment'], investmentModule, (m) => { investmentModule = m; renderActive(); });
+    const body = document.getElementById('db-module-body');
+    let bar = document.getElementById('invest-modchips');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'invest-modchips';
+      bar.className = 'filter-row module-tabs';
+      body.parentNode.insertBefore(bar, body);
+    }
+    bar.style.display = dataSubtab === 'Investment Activity' ? '' : 'none';
+    chipRow(bar, ['Sales', 'Financing', 'Capital Investment'], investmentModule, (m) => { investmentModule = m; renderActive(); });
+  }
+
+  /* activity-category lens on the map: see only what shows up for that category */
+  function renderCategoryChips() {
+    const el = document.getElementById('category-chips');
+    if (!el) return;
+    const cats = IDMT.filterEngine.categoryNames();
+    const active = IDMT.filters.category;
+    el.innerHTML = `<button class="chip cat ${!active ? 'active' : ''}" data-c="">All activity</button>` +
+      cats.map((c) => `<button class="chip cat ${active === c ? 'active' : ''}" data-c="${c}">${c}</button>`).join('');
+    el.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => IDMT.filterEngine.setCategory(chip.dataset.c));
+    });
+  }
+
+  /* Markets: cumulative data for every submarket (tracked inventory roll-up) */
+  function renderMarketsPanel() {
+    const el = document.getElementById('markets-panel');
+    if (!el) return;
+    const { rows, totals } = IDMT.aggregate();
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    el.innerHTML = `
+      <div class="mp-head">
+        <div class="mp-title">Submarkets — tracked inventory</div>
+        <div class="mp-totals">${IDMT.fmt.int(totals.count)} properties · ${IDMT.fmt.int(totals.sf)} SF</div>
+      </div>
+      ${rows.map((r) => `
+        <div class="mp-row" data-sub="${esc(r.name)}">
+          <div class="mp-name">${esc(r.name)}</div>
+          <div class="mp-stats">
+            <span>${r.count} prop${r.count === 1 ? '' : 's'}</span>
+            <span>${IDMT.fmt.int(r.sf)} SF</span>
+            <span>${r.count < 3 ? '·' : IDMT.fmt.pct(r.avgOcc) + ' occ'}</span>
+            <span>${r.count < 3 ? '·' : (r.avgRent === null ? '—' : IDMT.fmt.usd(r.avgRent))}</span>
+          </div>
+        </div>`).join('')}
+      <div class="mp-foot">Averages need n ≥ 3 · click a submarket to zoom</div>`;
+    el.querySelectorAll('.mp-row').forEach((row) => {
+      row.addEventListener('click', () => IDMT.map.focusSubmarket(row.dataset.sub));
+    });
   }
 
   /* ---------- shared refresh ---------- */
@@ -85,9 +139,6 @@ IDMT.app = (function () {
   const PANELS = [
     ['map-filters-btn', 'map-filters-panel', 'Filters'],
     ['db-filters-btn', 'db-filters-panel', 'Advanced filters'],
-    ['leasing-filters-btn', 'leasing-filters-panel', 'Advanced filters'],
-    ['investment-filters-btn', 'investment-filters-panel', 'Advanced filters'],
-    ['development-filters-btn', 'development-filters-panel', 'Advanced filters'],
   ];
 
   function renderFilterPanels() {
@@ -108,7 +159,8 @@ IDMT.app = (function () {
     renderFilterPanels();
     renderActive();
     const shown = IDMT.filteredProperties().length;
-    status(`${shown} of ${IDMT.properties.length} properties shown · ${IDMT.filterEngine.activeCount()} filters`);
+    const cat = IDMT.filters.category ? ` · ${IDMT.filters.category} lens` : '';
+    status(`${shown} of ${IDMT.properties.length} properties shown${cat} · ${IDMT.filterEngine.activeCount()} filters`);
   }
 
   /* fired after local edits / adds rebuild the dataset */
