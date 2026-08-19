@@ -561,14 +561,20 @@ IDMT.map = (function () {
   }
 
   function setMode(m) {
+    const changed = m !== mode;
     mode = m;
     applyMode();
     updateParcelsHint();
-    // entering Parcels at metro zoom: come down to where the fabric (z14+) exists.
-    // The user has taken the camera — cancel any pending intro fit so it can't clobber this.
-    if (m === 'parcels' && map.getZoom() < 14) {
-      msaFitted = true;
-      map.flyTo({ zoom: 15.2, pitch: is3D ? 55 : 0, duration: 2200, essential: true });
+    if (!changed || !styleReady) return;
+    // each section resets to its canonical camera: Properties/Markets = the full MSA,
+    // Parcels = street level where the fabric lives. Cancels any pending intro fit.
+    msaFitted = true;
+    stopOrbit();
+    if (m === 'parcels') {
+      const mk = IDMT.config.market;
+      map.flyTo({ center: mk.center, zoom: 15.2, pitch: is3D ? 55 : 0, bearing: mk.bearing || 0, duration: 2200, essential: true });
+    } else {
+      fitMSA({ duration: 2200 });
     }
   }
 

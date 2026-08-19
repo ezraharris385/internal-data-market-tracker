@@ -212,6 +212,24 @@ IDMT.app = (function () {
     }
     const exportBtn = document.getElementById('props-export');
     if (exportBtn) exportBtn.addEventListener('click', () => IDMT.exportWorkbook());
+    // explicit workbook upload (same preview-locally contract as drag-drop)
+    const upBtn = document.getElementById('btn-upload-workbook');
+    const upFile = document.getElementById('workbook-file');
+    if (upBtn && upFile) {
+      upBtn.addEventListener('click', () => upFile.click());
+      upFile.addEventListener('change', async () => {
+        const file = upFile.files && upFile.files[0];
+        if (!file) return;
+        try {
+          IDMT.ingestWorkbook(await file.arrayBuffer());
+          refreshAll();
+          status(`previewing ${file.name} (local only — commit it as data/properties.xlsx to publish)`);
+        } catch (err) {
+          status('Could not read ' + file.name + ': ' + err.message, true);
+        }
+        upFile.value = '';
+      });
+    }
     ['btn-add-property', 'btn-add-property-2'].forEach((id) => {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => {

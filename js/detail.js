@@ -105,13 +105,19 @@ IDMT.detail = (function () {
 
         <div class="detail-section-title">Property record</div>
         ${cats.map((c, i) => catSection(p, c, i < 2)).join('')}
+        ${editing ? `
+        <div class="savebar">
+          <button class="btn-primary" id="detail-save-2">Save changes</button>
+          <button class="btn-ghost sm" id="detail-cancel-2">Cancel</button>
+        </div>` : `
         <div class="detail-actions">
           <button class="btn-primary" id="detail-zoom">Zoom to property</button>
-        </div>
+        </div>`}
       </div>`;
     drawer.classList.add('open');
 
-    document.getElementById('detail-zoom').addEventListener('click', () => IDMT.map.focusProperty(p._id));
+    const zoomBtn = document.getElementById('detail-zoom');
+    if (zoomBtn) zoomBtn.addEventListener('click', () => IDMT.map.focusProperty(p._id));
     document.getElementById('detail-export').addEventListener('click', () => IDMT.exportWorkbook());
     document.getElementById('detail-edit').addEventListener('click', () => {
       open(IDMT.getProperty(currentId) || p, { edit: !editing });
@@ -125,12 +131,17 @@ IDMT.detail = (function () {
 
     if (editing) {
       wireImageUpload(el);
-      document.getElementById('detail-save').addEventListener('click', () => {
+      const doSave = () => {
         const changes = { 'Notes': document.getElementById('detail-notes').value };
         el.querySelectorAll('.edit-field').forEach((inp) => { if (inp.dataset.col) changes[inp.dataset.col] = inp.value; });
         IDMT.saveEdits(p._id, changes);
         open(IDMT.getProperty(p._id), { edit: false });
-      });
+      };
+      document.getElementById('detail-save').addEventListener('click', doSave);
+      const save2 = document.getElementById('detail-save-2');
+      if (save2) save2.addEventListener('click', doSave);
+      const cancel2 = document.getElementById('detail-cancel-2');
+      if (cancel2) cancel2.addEventListener('click', () => open(IDMT.getProperty(currentId) || p, { edit: false }));
     }
   }
 
@@ -146,46 +157,59 @@ IDMT.detail = (function () {
     const cats = categories(Object.assign({ _type: 'Office' }, blank));
 
     el.innerHTML = `
-      <div class="detail-hero-fallback">＋</div>
       <div class="detail-body">
-        <div class="detail-name">New property</div>
-        <div class="detail-addr">Fill in what you know — everything can be edited later. Saved to this browser until you export the workbook.</div>
-        <div class="detail-section-title">Identity</div>
-        <table class="detail-fields"><tbody>
-          <tr><td>Property Name *</td><td><input class="edit-field" id="new-name" data-col="${esc(f.name)}" /></td></tr>
-          <tr><td>Property Type *</td><td><select class="edit-field" id="new-type" data-col="${esc(f.type)}">
+        <div class="detail-name">Add a property</div>
+        <div class="detail-addr">Only a name and a map location are required — everything else can be filled in any time.</div>
+
+        <div class="form-grid">
+          <div class="ff full"><label>Property name *</label><input class="ff-in edit-field" id="new-name" data-col="${esc(f.name)}" placeholder="e.g. 801 Marquette Tower" /></div>
+          <div class="ff"><label>Property type *</label><select class="ff-in edit-field" id="new-type" data-col="${esc(f.type)}">
             ${(IDMT.config.typeOrder || []).map((t) => `<option value="${esc(t)}">${esc(t)}</option>`).join('')}
-          </select></td></tr>
-          <tr><td>Latitude *</td><td><input class="edit-field" id="new-lat" data-col="${esc(f.lat)}" placeholder="44.97…" /></td></tr>
-          <tr><td>Longitude *</td><td><input class="edit-field" id="new-lng" data-col="${esc(f.lng)}" placeholder="-93.27…" /></td></tr>
-        </tbody></table>
-        <button class="btn-ghost sm" id="new-pick">📍 Pick location on the map</button>
-        <span class="notes-status" id="pick-status"></span>
-        <div class="detail-section-title">Property record</div>
-        ${cats.filter((c) => c.name !== 'Other Fields').map((c) => catSection(blank, c, false)).join('')}
-        <div class="detail-actions">
+          </select></div>
+          <div class="ff"><label>Class</label><select class="ff-in edit-field" data-col="Class"><option value=""></option><option>A</option><option>B</option><option>C</option></select></div>
+          <div class="ff full"><label>Street address</label><input class="ff-in edit-field" data-col="${esc(f.address)}" placeholder="street + number" /></div>
+          <div class="ff"><label>Building SF</label><input class="ff-in edit-field" data-col="${esc(f.size)}" placeholder="0" /></div>
+          <div class="ff"><label>Year built</label><input class="ff-in edit-field" data-col="Year Built" placeholder="YYYY" /></div>
+          <div class="ff full"><label>Status</label><select class="ff-in edit-field" data-col="Status"><option>Existing</option><option>Under Construction</option><option>Proposed</option></select></div>
+        </div>
+
+        <div class="loc-card">
+          <button class="btn-primary sm" id="new-pick">📍 Pick location on the map</button>
+          <input type="hidden" id="new-lat" class="edit-field" data-col="${esc(f.lat)}" />
+          <input type="hidden" id="new-lng" class="edit-field" data-col="${esc(f.lng)}" />
+          <div class="loc-readout" id="loc-readout">No location yet — click the button, then click anywhere on the map. City, county, and submarket fill in automatically.</div>
+        </div>
+
+        <details class="detail-cat"><summary>More fields (optional)<span class="cat-n">${cats.length - 1} categories</span></summary>
+          <div style="padding: 4px 12px 10px">
+            ${cats.filter((c) => c.name !== 'Other Fields').map((c) => catSection(blank, c, false)).join('')}
+          </div>
+        </details>
+
+        <div class="savebar">
           <button class="btn-primary" id="new-save">Create property</button>
+          <button class="btn-ghost sm" id="new-cancel">Cancel</button>
         </div>
       </div>`;
     drawer.classList.add('open');
 
     document.getElementById('new-pick').addEventListener('click', () => {
-      document.getElementById('pick-status').textContent = 'click the map…';
+      document.getElementById('loc-readout').textContent = 'Now click anywhere on the map…';
       IDMT.map.pickLocation((lngLat) => {
-        const latEl = document.getElementById('new-lat'), lngEl = document.getElementById('new-lng');
-        if (latEl) latEl.value = lngLat.lat.toFixed(6);
-        if (lngEl) lngEl.value = lngLat.lng.toFixed(6);
-        const s = document.getElementById('pick-status');
-        if (s) s.textContent = 'location set ✓';
+        document.getElementById('new-lat').value = lngLat.lat.toFixed(6);
+        document.getElementById('new-lng').value = lngLat.lng.toFixed(6);
+        const r = document.getElementById('loc-readout');
+        if (r) r.innerHTML = `✓ Location set — <b>${lngLat.lat.toFixed(5)}, ${lngLat.lng.toFixed(5)}</b>`;
       });
     });
 
+    document.getElementById('new-cancel').addEventListener('click', close);
     document.getElementById('new-save').addEventListener('click', () => {
       const name = document.getElementById('new-name').value.trim();
       const lat = parseFloat(document.getElementById('new-lat').value);
       const lng = parseFloat(document.getElementById('new-lng').value);
       if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-        alert('A property needs at least a name and a location (use 📍 Pick location).');
+        alert('A property needs at least a name and a map location (📍 Pick location).');
         return;
       }
       const changes = {};

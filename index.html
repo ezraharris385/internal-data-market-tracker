@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1.6" />
+  <link rel="stylesheet" href="css/styles.css?v=1.7" />
 </head>
 <body class="mode-properties">
   <header class="topbar">
@@ -132,6 +132,8 @@
           <div class="search-suggestions" id="db-search-suggestions"></div>
         </div>
         <button class="filters-btn" id="db-filters-btn">Advanced filters</button>
+        <button class="btn-ghost" id="btn-upload-workbook" title="Load a new workbook (preview locally; commit data/properties.xlsx to publish)">⬆ Upload workbook</button>
+        <input type="file" id="workbook-file" accept=".xlsx,.xlsm,.xls" hidden />
         <button class="btn-ghost" id="props-export" title="Download an .xlsx with your local edits applied">⬇ Export workbook</button>
         <button class="filters-btn add" id="btn-add-property-2" title="Add a new property">＋ Add property</button>
       </div>
@@ -171,13 +173,13 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=1.6"></script>
-  <script src="js/filters.js?v=1.6"></script>
-  <script src="js/search.js?v=1.6"></script>
-  <script src="js/map.js?v=1.6"></script>
-  <script src="js/detail.js?v=1.6"></script>
-  <script src="js/database.js?v=1.6"></script>
-  <script src="js/properties.js?v=1.6"></script>
-  <script src="js/app.js?v=1.6"></script>
+  <script src="js/data.js?v=1.7"></script>
+  <script src="js/filters.js?v=1.7"></script>
+  <script src="js/search.js?v=1.7"></script>
+  <script src="js/map.js?v=1.7"></script>
+  <script src="js/detail.js?v=1.7"></script>
+  <script src="js/database.js?v=1.7"></script>
+  <script src="js/properties.js?v=1.7"></script>
+  <script src="js/app.js?v=1.7"></script>
 </body>
 </html>
