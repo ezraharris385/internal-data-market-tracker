@@ -88,6 +88,7 @@ IDMT.map = (function () {
       if (!buildingsGrown && map.getZoom() >= 15) growBuildings();
     });
     map.on('mousedown', stopOrbit);
+    map.on('zoom', () => updateParcelsHint());
     new ResizeObserver(() => map.resize()).observe(document.getElementById('map'));
     wireControls();
     return map;
@@ -223,22 +224,33 @@ IDMT.map = (function () {
         url: 'pmtiles://' + abs,
         attribution: i === 0 ? (cfg.attribution || '') : '',
       });
+      // parcels carry their county data: color by use class (legend in Parcels mode)
+      const use = ['downcase', ['coalesce', ['get', 'USECLASS1'], '']];
+      const has = (s) => ['>', ['index-of', s, use], -1];
       map.addLayer({
         id: srcId + '-fill', type: 'fill', source: srcId, 'source-layer': srcLayer,
         minzoom,
         paint: {
-          'fill-color': '#c98500',
-          'fill-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0, minzoom + 0.6, 0.04],
+          'fill-color': ['case',
+            has('res'), '#4e79c4',
+            has('apart'), '#4e79c4',
+            has('comm'), '#d19a45',
+            has('ind'), '#c26a50',
+            has('agr'), '#5f9e63',
+            has('church'), '#8d8d97', has('school'), '#8d8d97', has('exempt'), '#8d8d97',
+            has('public'), '#8d8d97', has('gov'), '#8d8d97',
+            '#6e7480'],
+          'fill-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0, minzoom + 0.8, 0.16],
         },
       }, firstSymbolLayerId());
       map.addLayer({
         id: srcId + '-line', type: 'line', source: srcId, 'source-layer': srcLayer,
         minzoom,
         paint: {
-          'line-color': '#a08c5a',
-          // fade in over ~half a zoom level — no hard pop when the fabric arrives
-          'line-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0, minzoom + 0.6, 0.5, 16.5, 0.85],
-          'line-width': ['interpolate', ['linear'], ['zoom'], minzoom, 0.4, 17, 1.4],
+          // restrained at low zoom: dense old plats otherwise read as solid blocks
+          'line-color': '#8f8878',
+          'line-opacity': ['interpolate', ['linear'], ['zoom'], minzoom, 0, 15, 0.22, 17, 0.6],
+          'line-width': ['interpolate', ['linear'], ['zoom'], minzoom, 0.2, 18, 1.1],
         },
       }, firstSymbolLayerId());
       IDMT._parcelTileLayerIds.push(srcId + '-fill', srcId + '-line');
@@ -551,10 +563,20 @@ IDMT.map = (function () {
   function setMode(m) {
     mode = m;
     applyMode();
-    // entering Parcels at metro zoom: come down to where the fabric (z14+) is visible
+    updateParcelsHint();
+    // entering Parcels at metro zoom: come down to where the fabric (z14+) exists.
+    // The user has taken the camera — cancel any pending intro fit so it can't clobber this.
     if (m === 'parcels' && map.getZoom() < 14) {
-      map.easeTo({ zoom: 15, pitch: is3D ? 55 : 0, duration: 1800 });
+      msaFitted = true;
+      map.flyTo({ zoom: 15.2, pitch: is3D ? 55 : 0, duration: 2200, essential: true });
     }
+  }
+
+  /* "zoom in" hint while the Parcels tab sits below the fabric's minzoom */
+  function updateParcelsHint() {
+    const el = document.getElementById('parcels-hint');
+    if (!el) return;
+    el.style.display = mode === 'parcels' && map.getZoom() < 13.9 ? 'block' : 'none';
   }
 
   /* One-shot location picker for the Add-property form. */

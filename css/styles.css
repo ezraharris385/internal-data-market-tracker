@@ -246,6 +246,29 @@ body {
 /* mode-gated dock sections: boundaries → Markets tab, parcel fabric → Parcels tab */
 body:not(.mode-markets) .markets-only { display: none; }
 body:not(.mode-parcels) .parcels-only { display: none; }
+/* activity lenses belong to Properties — Parcels/Markets stay focused */
+body:not(.mode-properties) .cat-chips { display: none !important; }
+
+/* Parcels: use-class legend */
+.parcel-legend {
+  position: absolute; right: 14px; top: 14px; z-index: 20;
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; font-size: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+}
+.pl-row { display: flex; align-items: center; gap: 8px; padding: 2.5px 0; color: var(--text-secondary); }
+.pl-row .swatch { width: 10px; height: 10px; border-radius: 3px; }
+body.presentation .parcel-legend { display: none !important; }
+
+/* Parcels: zoom hint */
+#parcels-hint {
+  position: absolute; top: 74px; left: 50%; transform: translateX(-50%);
+  z-index: 21; font-size: 12.5px; color: var(--text-secondary);
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 20px; padding: 8px 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.45); pointer-events: none;
+}
+body.presentation #parcels-hint { display: none !important; }
 
 /* sample-data provenance badge */
 .sample-badge {
