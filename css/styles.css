@@ -243,8 +243,17 @@ body {
   font-size: 12.5px; max-height: min(430px, calc(100vh - 200px)); overflow-y: auto;
 }
 .dock-pop.open { display: block; }
-/* boundary visuals belong to the Markets tab only */
-body.mode-properties .markets-only { display: none; }
+/* mode-gated dock sections: boundaries → Markets tab, parcel fabric → Parcels tab */
+body:not(.mode-markets) .markets-only { display: none; }
+body:not(.mode-parcels) .parcels-only { display: none; }
+
+/* sample-data provenance badge */
+.sample-badge {
+  display: inline-block; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.6px; text-transform: uppercase;
+  color: #fab219; border: 1px dashed #fab21966; border-radius: 6px;
+  padding: 3px 8px; margin: 0 0 10px;
+}
 
 .filters-btn.add { color: #fff; background: var(--accent); border-color: var(--accent); }
 .filters-btn.add:hover { filter: brightness(1.12); }

@@ -80,6 +80,19 @@ Then open http://localhost:8000. (Opening `index.html` directly from disk won't 
 
 Zero build step, zero backend. MapLibre GL JS (map + 3D), OpenFreeMap tiles (no API key), SheetJS (xlsx parsing in-browser), JSZip + togeojson (KMZ → GeoJSON), Chart.js (analytics). All from CDNs.
 
+## Data provenance — what's real vs. sample
+
+| Layer / data | Source | Status |
+|---|---|---|
+| Metro parcel fabric (owner, PIN, EMV, acres, sales) | MetroGIS Regional Parcel Dataset — county records | **REAL** (open data, Apr 2026 vintage) |
+| Per-property parcel outlines | Hennepin/Ramsey county GIS lookups | **REAL polygons**, matched to sample properties |
+| Submarket boundaries | User-drawn KMZs | **REAL** (interim, user-maintained) |
+| MSA / county / city boundaries | Census (user-supplied pack) | **REAL** |
+| Basemap + 3D buildings | CARTO / OpenStreetMap | **REAL** |
+| **Property workbook (all 123 columns)** | Generated demo data | **SAMPLE — fictional; replace `data/properties.xlsx`** |
+
+Property pages carry a "Sample data" badge while `config.json → data.sample` is `true` — set it to `false` when the real workbook lands.
+
 ## Sample data disclaimer
 
 The workbook and boundaries shipped in this repo are **fictional sample data** on real Minneapolis-area coordinates, included so the platform demos out of the box. Replace them with your internal data.

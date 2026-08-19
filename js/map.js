@@ -268,7 +268,8 @@ IDMT.map = (function () {
       new maplibregl.Popup({ offset: 8, maxWidth: '300px' })
         .setLngLat(e.lngLat)
         .setHTML(`<div class="popup-name">Parcel record</div>` +
-          rows.map(([k, v]) => `<div class="popup-sub"><b>${k}:</b> ${esc(v)}</div>`).join(''))
+          rows.map(([k, v]) => `<div class="popup-sub"><b>${k}:</b> ${esc(v)}</div>`).join('') +
+          `<div class="popup-sub" style="margin-top:5px;color:var(--text-muted)">Source: MetroGIS county records (real, open data)</div>`)
         .addTo(map);
     }
   }
@@ -535,16 +536,25 @@ IDMT.map = (function () {
 
   function applyMode() {
     if (!styleReady) return;
+    // boundary visuals: Markets tab only
     for (const [checkboxId, layers] of Object.entries(BOUNDARY_LAYERS)) {
       const cb = document.getElementById(checkboxId);
       const vis = mode === 'markets' && cb && cb.checked ? 'visible' : 'none';
       layers.forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', vis));
     }
+    // metro parcel fabric: Parcels tab only
+    const ptCb = document.getElementById('lyr-parcel-tiles');
+    const ptVis = mode === 'parcels' && ptCb && ptCb.checked ? 'visible' : 'none';
+    (IDMT._parcelTileLayerIds || []).forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', ptVis));
   }
 
   function setMode(m) {
     mode = m;
     applyMode();
+    // entering Parcels at metro zoom: come down to where the fabric (z14+) is visible
+    if (m === 'parcels' && map.getZoom() < 14) {
+      map.easeTo({ zoom: 15, pitch: is3D ? 55 : 0, duration: 1800 });
+    }
   }
 
   /* One-shot location picker for the Add-property form. */
@@ -601,7 +611,8 @@ IDMT.map = (function () {
       if (cb) cb.addEventListener('change', applyMode);
     });
     toggle('lyr-parcels', ['idmt-parcels-fill', 'idmt-parcels-line']);
-    toggle('lyr-parcel-tiles', () => IDMT._parcelTileLayerIds || []);
+    const ptCb = document.getElementById('lyr-parcel-tiles');
+    if (ptCb) ptCb.addEventListener('change', applyMode); // fabric respects the Parcels-mode gate
     toggle('lyr-properties', ['idmt-properties-pt', 'idmt-properties-halo', 'idmt-selected']);
     toggle('lyr-satellite', ['idmt-satellite']);
 

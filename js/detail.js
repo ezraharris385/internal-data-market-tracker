@@ -79,6 +79,7 @@ IDMT.detail = (function () {
         <span class="type-badge" style="border-color:${color}66;background:${color}22">
           <span style="color:${color}">●</span> ${esc(p._type)}${p._submarket ? ' · ' + esc(p._submarket) + ' Submarket' : ''}
         </span>
+        ${IDMT.config.data.sample ? `<div class="sample-badge" title="${esc(IDMT.config.data.sampleNote || '')}">⚠ Sample data — fictional record, to be replaced</div>` : ''}
         <div class="detail-actions top">
           <button class="btn-ghost sm" id="detail-edit">${editing ? 'Cancel' : '✎ Edit'}</button>
           ${editing ? '<button class="btn-primary sm" id="detail-save">Save changes</button>' : ''}

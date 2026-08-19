@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1.2" />
+  <link rel="stylesheet" href="css/styles.css?v=1.3" />
 </head>
 <body class="mode-properties">
   <header class="topbar">
@@ -19,6 +19,7 @@
     </div>
     <nav class="tabs" id="tabs">
       <button class="tab active" data-view="properties">Properties</button>
+      <button class="tab" data-view="parcels">Parcels</button>
       <button class="tab" data-view="markets">Markets</button>
       <button class="tab" data-view="data">Data</button>
     </nav>
@@ -52,8 +53,10 @@
         <label class="layer-row"><input type="checkbox" id="lyr-3d" checked /> 3D buildings</label>
         <label class="layer-row"><input type="checkbox" id="lyr-msa" checked /> MSA boundary</label>
         <label class="layer-row"><input type="checkbox" id="lyr-parcels" checked /> Property boundaries</label>
-        <label class="layer-row"><input type="checkbox" id="lyr-parcel-tiles" checked /> All parcels (metro)</label>
         <label class="layer-row"><input type="checkbox" id="lyr-properties" checked /> Properties</label>
+        <div class="layers-divider parcels-only"></div>
+        <div class="layers-title parcels-only">Parcel fabric</div>
+        <label class="layer-row parcels-only"><input type="checkbox" id="lyr-parcel-tiles" checked /> All parcels (metro)</label>
         <label class="layer-row"><input type="checkbox" id="lyr-satellite" /> Satellite imagery</label>
         <div class="layers-divider markets-only"></div>
         <div class="layers-title markets-only">Market boundaries</div>
@@ -140,13 +143,13 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=1.2"></script>
-  <script src="js/filters.js?v=1.2"></script>
-  <script src="js/search.js?v=1.2"></script>
-  <script src="js/map.js?v=1.2"></script>
-  <script src="js/detail.js?v=1.2"></script>
-  <script src="js/database.js?v=1.2"></script>
-  <script src="js/properties.js?v=1.2"></script>
-  <script src="js/app.js?v=1.2"></script>
+  <script src="js/data.js?v=1.3"></script>
+  <script src="js/filters.js?v=1.3"></script>
+  <script src="js/search.js?v=1.3"></script>
+  <script src="js/map.js?v=1.3"></script>
+  <script src="js/detail.js?v=1.3"></script>
+  <script src="js/database.js?v=1.3"></script>
+  <script src="js/properties.js?v=1.3"></script>
+  <script src="js/app.js?v=1.3"></script>
 </body>
 </html>

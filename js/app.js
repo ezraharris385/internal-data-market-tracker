@@ -7,7 +7,7 @@ IDMT.app = (function () {
   let activeView = 'properties';
   let dataSubtab = 'Properties';
   let investmentModule = 'Sales';
-  const MAP_VIEWS = ['properties', 'markets'];
+  const MAP_VIEWS = ['properties', 'parcels', 'markets'];
   const DATA_SUBTABS = ['Properties', 'Market Data', 'Leasing', 'Investment Activity', 'Development'];
 
   function status(msg, isError) {
@@ -26,8 +26,8 @@ IDMT.app = (function () {
       v.classList.toggle('active', isMap ? v.id === 'view-map' : v.id === 'view-' + name);
     });
     if (isMap) {
-      document.body.classList.toggle('mode-markets', name === 'markets');
-      document.body.classList.toggle('mode-properties', name === 'properties');
+      ['properties', 'parcels', 'markets'].forEach((m) =>
+        document.body.classList.toggle('mode-' + m, name === m));
       IDMT.map.setMode(name);
       IDMT.map.resize();
     }

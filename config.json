@@ -27,7 +27,9 @@
   },
   "data": {
     "workbook": "data/properties.xlsx",
-    "sheet": "Properties"
+    "sheet": "Properties",
+    "sample": true,
+    "sampleNote": "SAMPLE DATA — this property record is fictional demo data; replace data/properties.xlsx with your internal workbook."
   },
   "layers": {
     "submarkets": {
