@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1.7" />
+  <link rel="stylesheet" href="css/styles.css?v=1.8" />
 </head>
 <body class="mode-properties">
   <header class="topbar">
@@ -74,6 +74,7 @@
         <button class="dock-btn" id="dock-types-btn" title="Asset classes">Types</button>
         <span class="dock-sep"></span>
         <button class="dock-btn" id="btn-pitch" title="Tilt">3D</button>
+        <button class="dock-btn" id="btn-aerial" title="Aerial imagery">Aerial</button>
         <button class="dock-btn" id="btn-orbit" title="Orbit (o)">Orbit</button>
         <button class="dock-btn" id="btn-grow" title="Replay skyline build">⟳</button>
         <button class="dock-btn" id="btn-present" title="Presentation mode (h)">🎥</button>
@@ -94,6 +95,30 @@
 
     <!-- Parcels: zoom hint -->
     <div id="parcels-hint" style="display:none">Zoom in to see the parcel fabric — parcels appear at street level</div>
+
+    <!-- Comp set tray -->
+    <div class="comp-tray" id="comp-tray">
+      <span class="ct-label" id="ct-label">Comp set</span>
+      <button class="dock-btn" id="ct-compare">Compare</button>
+      <button class="dock-btn" id="ct-export">Export CSV</button>
+      <button class="dock-btn" id="ct-clear">Clear</button>
+    </div>
+
+    <!-- Comparison overlay -->
+    <div class="compare-overlay" id="compare-overlay">
+      <div class="compare-sheet">
+        <div class="compare-head">
+          <div class="compare-title">Comp set comparison</div>
+          <button class="dock-btn" id="compare-close">✕ Close</button>
+        </div>
+        <div class="compare-body" id="compare-body"></div>
+      </div>
+    </div>
+
+    <!-- Markets: presentation switch (visible way back to the dataset) -->
+    <div class="map-return markets-only" id="map-return">
+      <button class="dock-btn" id="map-return-btn">◀ Back to Markets dataset</button>
+    </div>
 
     <!-- Markets: cumulative submarket roll-up -->
     <aside class="markets-panel markets-only" id="markets-panel"></aside>
@@ -173,13 +198,14 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=1.7"></script>
-  <script src="js/filters.js?v=1.7"></script>
-  <script src="js/search.js?v=1.7"></script>
-  <script src="js/map.js?v=1.7"></script>
-  <script src="js/detail.js?v=1.7"></script>
-  <script src="js/database.js?v=1.7"></script>
-  <script src="js/properties.js?v=1.7"></script>
-  <script src="js/app.js?v=1.7"></script>
+  <script src="js/data.js?v=1.8"></script>
+  <script src="js/filters.js?v=1.8"></script>
+  <script src="js/comps.js?v=1.8"></script>
+  <script src="js/search.js?v=1.8"></script>
+  <script src="js/map.js?v=1.8"></script>
+  <script src="js/detail.js?v=1.8"></script>
+  <script src="js/database.js?v=1.8"></script>
+  <script src="js/properties.js?v=1.8"></script>
+  <script src="js/app.js?v=1.8"></script>
 </body>
 </html>

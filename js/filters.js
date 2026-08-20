@@ -42,6 +42,18 @@ IDMT.filterEngine = (function () {
 
   function categoryNames() { return Object.keys(CATEGORIES); }
 
+  /* How many properties each lens would show, given every OTHER active filter.
+     Analysts should see where the activity is before spending a click. */
+  function categoryCounts() {
+    const saved = state.category;
+    state.category = '';
+    const base = IDMT.properties.filter(matches);
+    state.category = saved;
+    const out = { __all: base.length };
+    for (const [name, pred] of Object.entries(CATEGORIES)) out[name] = base.filter(pred).length;
+    return out;
+  }
+
   function fieldDefs() {
     const s = IDMT.config.schema || {};
     return { universal: s.universal || [], byType: s.byType || {} };
@@ -243,5 +255,33 @@ IDMT.filterEngine = (function () {
     container.scrollTop = scroll;
   }
 
-  return { matches, activeCount, clearAll, setTypeHidden, soloType, renderPanel, visibleTypes, setCategory, categoryNames };
+  return { matches, activeCount, clearAll, setTypeHidden, soloType, renderPanel, visibleTypes, setCategory, categoryNames, categoryCounts };
+})();
+
+/* ---------------- comp set: the core CoStar workflow ----------------
+   Analysts don't browse — they assemble a set of comparables, compare them
+   side by side, and export it into a memo or tour book. */
+IDMT.compSet = (function () {
+  const KEY = 'idmt-compset';
+  let ids = null;
+
+  function all() {
+    if (ids === null) {
+      try { ids = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { ids = []; }
+    }
+    return ids;
+  }
+  function save() { localStorage.setItem(KEY, JSON.stringify(ids)); IDMT.emit('compset'); }
+  function has(id) { return all().includes(id); }
+  function toggle(id) {
+    const list = all();
+    const i = list.indexOf(id);
+    i === -1 ? list.push(id) : list.splice(i, 1);
+    save();
+    return i === -1;
+  }
+  function clear() { ids = []; save(); }
+  function properties() { return all().map((id) => IDMT.getProperty(id)).filter(Boolean); }
+  function count() { return all().length; }
+  return { all, has, toggle, clear, properties, count };
 })();

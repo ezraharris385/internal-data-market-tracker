@@ -22,7 +22,7 @@ IDMT.app = (function () {
 
   /* ---------- view switching ---------- */
 
-  function switchView(name) {
+  function switchView(name, opts = {}) {
     activeView = name;
     document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
     const isMap = isMapView(name);
@@ -32,7 +32,7 @@ IDMT.app = (function () {
     if (isMap) {
       ['properties', 'parcels', 'markets'].forEach((m) =>
         document.body.classList.toggle('mode-' + m, name === m));
-      IDMT.map.setMode(name);
+      IDMT.map.setMode(name, opts);
       IDMT.map.resize();
     }
     renderActive();
@@ -41,7 +41,7 @@ IDMT.app = (function () {
   /* from the Markets dataset: jump to the map presentation zoomed on a submarket */
   function showSubmarketOnMap(name) {
     marketsPresentation = 'Map view';
-    switchView('markets');
+    switchView('markets', { keepCamera: true });
     IDMT.map.focusSubmarket(name);
   }
 
@@ -114,8 +114,9 @@ IDMT.app = (function () {
     if (!el) return;
     const cats = IDMT.filterEngine.categoryNames();
     const active = IDMT.filters.category;
-    el.innerHTML = `<button class="chip cat ${!active ? 'active' : ''}" data-c="">All activity</button>` +
-      cats.map((c) => `<button class="chip cat ${active === c ? 'active' : ''}" data-c="${c}">${c}</button>`).join('');
+    const counts = IDMT.filterEngine.categoryCounts();
+    el.innerHTML = `<button class="chip cat ${!active ? 'active' : ''}" data-c="">All activity <b>${counts.__all}</b></button>` +
+      cats.map((c) => `<button class="chip cat ${active === c ? 'active' : ''}" data-c="${c}">${c} <b>${counts[c] || 0}</b></button>`).join('');
     el.querySelectorAll('.chip').forEach((chip) => {
       chip.addEventListener('click', () => IDMT.filterEngine.setCategory(chip.dataset.c));
     });
@@ -206,6 +207,7 @@ IDMT.app = (function () {
   function wirePanels() {
     IDMT.on('filters', onFiltersChanged);
     IDMT.on('data', onDataChanged);
+    IDMT.on('compset', () => { if (activeView === 'data') renderActive(); });
     for (const [btnId, panelId] of PANELS) {
       const btn = document.getElementById(btnId);
       if (btn) btn.addEventListener('click', () => document.getElementById(panelId).classList.toggle('open'));
@@ -237,6 +239,26 @@ IDMT.app = (function () {
         IDMT.detail.openNew();
       });
     });
+  }
+
+  function wireReturn() {
+    const btn = document.getElementById('map-return-btn');
+    if (btn) btn.addEventListener('click', () => { marketsPresentation = 'Dataset'; switchView('markets'); });
+    IDMT.on('toast', (msg) => toast(msg));
+  }
+
+  /* transient message — used when an action can't do what was asked */
+  function toast(msg) {
+    let el = document.getElementById('toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 4200);
   }
 
   function wireDock() {
@@ -304,8 +326,10 @@ IDMT.app = (function () {
       IDMT.map.init();
       IDMT.search.attach();
       IDMT.propertiesView.attach();
+      IDMT.comps.attach();
       wirePanels();
       wireDock();
+      wireReturn();
       wireDragDrop();
 
       document.querySelectorAll('.tab').forEach((t) =>
@@ -322,5 +346,5 @@ IDMT.app = (function () {
   }
 
   document.addEventListener('DOMContentLoaded', boot);
-  return { switchView, renderActive, showSubmarketOnMap };
+  return { switchView, renderActive, showSubmarketOnMap, toast };
 })();

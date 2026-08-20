@@ -64,9 +64,10 @@ IDMT.propertiesView = (function () {
 
     const table = document.getElementById('properties-table');
     table.innerHTML = `
-      <thead><tr>${cols.map((c) => `<th data-key="${esc(c.key)}">${esc(c.label)}${sortKey === c.key ? `<span class="sort-arrow">${sortDir > 0 ? '▲' : '▼'}</span>` : ''}</th>`).join('')}</tr></thead>
+      <thead><tr><th class="cmp-col" title="Add to comp set">✓</th>${cols.map((c) => `<th data-key="${esc(c.key)}">${esc(c.label)}${sortKey === c.key ? `<span class="sort-arrow">${sortDir > 0 ? '▲' : '▼'}</span>` : ''}</th>`).join('')}</tr></thead>
       <tbody>${rows.map((p) => `
         <tr data-id="${esc(p._id)}">
+          <td class="cmp-col"><input type="checkbox" class="cmp-check" data-id="${esc(p._id)}" ${IDMT.compSet.has(p._id) ? 'checked' : ''} /></td>
           <td><span style="color:${IDMT.typeColors[p._type] || '#898781'}">●</span> ${esc(p._name)}</td>
           <td>${esc([p._address, p._city].filter(Boolean).join(', '))}</td>
           ${cols.slice(2).map((c) => `<td>${cellValue(p, c)}</td>`).join('')}
@@ -79,8 +80,12 @@ IDMT.propertiesView = (function () {
         render();
       });
     });
+    table.querySelectorAll('.cmp-check').forEach((cb) => {
+      cb.addEventListener('click', (e) => { e.stopPropagation(); IDMT.compSet.toggle(cb.dataset.id); });
+    });
     table.querySelectorAll('tbody tr').forEach((tr) => {
-      tr.addEventListener('click', () => {
+      tr.addEventListener('click', (e) => {
+        if (e.target.closest('.cmp-col')) return;
         IDMT.app.switchView('properties');
         IDMT.map.focusProperty(tr.dataset.id);
       });

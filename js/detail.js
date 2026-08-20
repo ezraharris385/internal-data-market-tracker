@@ -57,6 +57,21 @@ IDMT.detail = (function () {
     </details>`;
   }
 
+  /* Owner intelligence: a prospecting hook — everything else this owner holds. */
+  function ownerBlock(p) {
+    const owner = String(p['Owner'] ?? '').trim();
+    if (!owner) return '';
+    const held = IDMT.properties.filter((q) => String(q['Owner'] ?? '').trim() === owner);
+    const sf = held.reduce((a, q) => a + (q._size || 0), 0);
+    if (held.length < 2) return '';
+    return `<div class="detail-section-title">Owner portfolio</div>
+      <div class="owner-card">
+        <div class="owner-name">${esc(owner)}</div>
+        <div class="owner-stats">${held.length} tracked properties · ${IDMT.fmt.int(sf)} SF</div>
+        <button class="btn-ghost sm" id="owner-filter" style="width:auto;margin-top:8px">Show this owner's portfolio</button>
+      </div>`;
+  }
+
   function open(p, opts = {}) {
     creating = false;
     currentId = p._id;
@@ -81,6 +96,7 @@ IDMT.detail = (function () {
         </span>
         ${IDMT.config.data.sample ? `<div class="sample-badge" title="${esc(IDMT.config.data.sampleNote || '')}">⚠ Sample data — fictional record, to be replaced</div>` : ''}
         <div class="detail-actions top">
+          <button class="btn-ghost sm ${IDMT.compSet.has(p._id) ? 'on' : ''}" id="detail-comp">${IDMT.compSet.has(p._id) ? '✓ In comp set' : '＋ Comp set'}</button>
           <button class="btn-ghost sm" id="detail-edit">${editing ? 'Cancel' : '✎ Edit'}</button>
           ${editing ? '<button class="btn-primary sm" id="detail-save">Save changes</button>' : ''}
           <button class="btn-ghost sm" id="detail-export" title="Download an .xlsx with all local edits applied — commit it to data/properties.xlsx">⬇ Workbook</button>
@@ -98,6 +114,7 @@ IDMT.detail = (function () {
           <div class="stat-tile"><div class="k">Submarket</div><div class="v" style="font-size:13px">${esc(p._submarket || '—')}</div></div>
         </div>
 
+        ${ownerBlock(p)}
         <div class="detail-section-title">Notes</div>
         <textarea class="notes-pad" id="detail-notes" placeholder="Property notes… (saved locally; export the workbook to keep them)">${esc(p['Notes'] ?? '')}</textarea>
         <button class="btn-ghost sm" id="notes-save">Save note</button>
@@ -116,6 +133,17 @@ IDMT.detail = (function () {
       </div>`;
     drawer.classList.add('open');
 
+    const compBtn = document.getElementById('detail-comp');
+    if (compBtn) compBtn.addEventListener('click', () => {
+      IDMT.compSet.toggle(p._id);
+      open(IDMT.getProperty(p._id) || p, { edit: editing });
+    });
+    const ownerBtn = document.getElementById('owner-filter');
+    if (ownerBtn) ownerBtn.addEventListener('click', () => {
+      IDMT.filters.multi['Owner'] = new Set([String(p['Owner']).trim()]);
+      IDMT.emit('filters');
+      close();
+    });
     const zoomBtn = document.getElementById('detail-zoom');
     if (zoomBtn) zoomBtn.addEventListener('click', () => IDMT.map.focusProperty(p._id));
     document.getElementById('detail-export').addEventListener('click', () => IDMT.exportWorkbook());

@@ -560,22 +560,41 @@ IDMT.map = (function () {
     (IDMT._parcelTileLayerIds || []).forEach((l) => map.getLayer(l) && map.setLayoutProperty(l, 'visibility', ptVis));
   }
 
-  function setMode(m) {
+  function setMode(m, opts = {}) {
     const changed = m !== mode;
     mode = m;
     applyMode();
     updateParcelsHint();
     if (!changed || !styleReady) return;
-    // each section resets to its canonical camera: Properties/Markets = the full MSA,
-    // Parcels = street level where the fabric lives. Cancels any pending intro fit.
+    // Each section resets to its canonical camera — UNLESS the caller is about to
+    // aim the camera itself (e.g. "show this submarket on the map"). Two competing
+    // camera animations was the black-screen bug.
     msaFitted = true;
     stopOrbit();
+    if (opts.keepCamera) return;
     if (m === 'parcels') {
       const mk = IDMT.config.market;
       map.flyTo({ center: mk.center, zoom: 15.2, pitch: is3D ? 55 : 0, bearing: mk.bearing || 0, duration: 2200, essential: true });
     } else {
       fitMSA({ duration: 2200 });
     }
+  }
+
+  /* Aerial (satellite) imagery — a first-class view control, not a buried layer */
+  function toggleAerial(on) {
+    if (!styleReady || !map.getLayer('idmt-satellite')) return;
+    const cb = document.getElementById('lyr-satellite');
+    const next = on === undefined ? map.getLayoutProperty('idmt-satellite', 'visibility') !== 'visible' : !!on;
+    map.setLayoutProperty('idmt-satellite', 'visibility', next ? 'visible' : 'none');
+    if (cb) cb.checked = next;
+    const btn = document.getElementById('btn-aerial');
+    if (btn) btn.classList.toggle('active', next);
+    // over imagery, our own dark building extrusions read as blobs — hide them
+    if (map.getLayer('idmt-3d-buildings')) {
+      const b3 = document.getElementById('lyr-3d');
+      map.setLayoutProperty('idmt-3d-buildings', 'visibility', next ? 'none' : (b3 && b3.checked ? 'visible' : 'none'));
+    }
+    return next;
   }
 
   /* "zoom in" hint while the Parcels tab sits below the fabric's minzoom */
@@ -616,7 +635,17 @@ IDMT.map = (function () {
   function toggleOrbit() { orbiting ? stopOrbit() : startOrbit(); }
 
   function togglePresentation() {
-    document.body.classList.toggle('presentation');
+    const on = document.body.classList.toggle('presentation');
+    // always leave a visible way out — a hidden-only-hotkey trap is not acceptable
+    let exit = document.getElementById('present-exit');
+    if (on && !exit) {
+      exit = document.createElement('button');
+      exit.id = 'present-exit';
+      exit.textContent = '✕ Exit presentation';
+      exit.addEventListener('click', togglePresentation);
+      document.body.appendChild(exit);
+    }
+    if (exit) exit.style.display = on ? 'block' : 'none';
   }
 
   /* ---------- controls ---------- */
@@ -642,7 +671,6 @@ IDMT.map = (function () {
     const ptCb = document.getElementById('lyr-parcel-tiles');
     if (ptCb) ptCb.addEventListener('change', applyMode); // fabric respects the Parcels-mode gate
     toggle('lyr-properties', ['idmt-properties-pt', 'idmt-properties-halo', 'idmt-selected']);
-    toggle('lyr-satellite', ['idmt-satellite']);
 
     document.getElementById('btn-pitch').addEventListener('click', () => {
       is3D = !is3D;
@@ -654,6 +682,10 @@ IDMT.map = (function () {
       fitMSA({ pitch: is3D ? (IDMT.config.market.pitch || 50) : 0 });
     });
     document.getElementById('btn-orbit').addEventListener('click', toggleOrbit);
+    const aerialBtn = document.getElementById('btn-aerial');
+    if (aerialBtn) aerialBtn.addEventListener('click', () => toggleAerial());
+    const satCb = document.getElementById('lyr-satellite');
+    if (satCb) satCb.addEventListener('change', (e) => toggleAerial(e.target.checked));
     document.getElementById('btn-grow').addEventListener('click', () => { buildingsGrown = true; growBuildings(); });
     document.getElementById('btn-present').addEventListener('click', togglePresentation);
     document.addEventListener('keydown', (e) => {
@@ -754,7 +786,11 @@ IDMT.map = (function () {
         if (feats.length) break;
       }
     }
-    if (!feats.length) return;
+    if (!feats.length) {
+      IDMT.emit('toast', `No boundary drawn for "${name}" — showing the whole market instead.`);
+      fitMSA({ duration: 1600 });
+      return;
+    }
     let minX = 180, minY = 90, maxX = -180, maxY = -90;
     feats.forEach((f) => {
       const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
@@ -763,12 +799,12 @@ IDMT.map = (function () {
         maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
       }));
     });
-    map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 70, pitch: is3D ? (IDMT.config.market.pitch || 50) : 0 });
+    map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 70, pitch: is3D ? (IDMT.config.market.pitch || 50) : 0, duration: 1800, essential: true });
     if (styleReady) map.setFilter('idmt-submarkets-highlight', ['==', ['coalesce', ['get', 'name'], ['get', 'Name'], ''], name]);
     IDMT.detail.close();
   }
 
   function resize() { if (map) map.resize(); }
 
-  return { init, refreshData, refreshFiltered, focusProperty, focusSubmarket, resize, growBuildings, toggleOrbit, setMode, pickLocation };
+  return { init, refreshData, refreshFiltered, focusProperty, focusSubmarket, resize, growBuildings, toggleOrbit, setMode, pickLocation, toggleAerial, togglePresentation };
 })();
