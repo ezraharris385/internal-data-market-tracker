@@ -8,7 +8,7 @@ IDMT.app = (function () {
   let dataSubtab = 'Properties';
   let investmentModule = 'Sales';
   let marketsPresentation = 'Dataset'; // Markets leads with data; 'Map view' is the option
-  const DATA_SUBTABS = ['Properties', 'Market Data', 'Leasing', 'Investment Activity', 'Development'];
+  const DATA_SUBTABS = ['Properties', 'Market Data', 'Leasing', 'Investment Activity', 'Development', 'Data Quality', 'Saved Lists'];
 
   function isMapView(name) {
     return name === 'properties' || name === 'parcels' || (name === 'markets' && marketsPresentation === 'Map view');
@@ -78,6 +78,10 @@ IDMT.app = (function () {
     } else if (dataSubtab === 'Investment Activity') {
       renderInvestmentChips();
       IDMT.database.renderModule(document.getElementById('db-module-body'), investmentModule, { keepChips: true });
+    } else if (dataSubtab === 'Data Quality') {
+      IDMT.database.renderQuality(document.getElementById('db-module-body'));
+    } else if (dataSubtab === 'Saved Lists') {
+      renderSavedLists(document.getElementById('db-module-body'));
     }
   }
 
@@ -152,6 +156,93 @@ IDMT.app = (function () {
     if (back) back.addEventListener('click', () => { marketsPresentation = 'Dataset'; switchView('markets'); });
   }
 
+  /* Saved lists & searches — how an analyst returns to work in progress */
+  function renderSavedLists(body) {
+    if (!body) return;
+    const entries = IDMT.lists.all();
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    body.innerHTML = entries.length ? `
+      <div class="table-card">
+        <h3>Saved lists & searches (${entries.length})</h3>
+        <div class="table-scroll"><table><thead><tr><th>Name</th><th>Kind</th><th>Contents</th><th>Saved</th><th></th></tr></thead>
+        <tbody>${entries.map((e, i) => `
+          <tr data-i="${i}">
+            <td>${esc(e.name)}</td>
+            <td>${e.kind === 'list' ? 'Property list' : 'Saved search'}</td>
+            <td>${e.kind === 'list' ? e.ids.length + ' properties' : describeSearch(e.state)}</td>
+            <td>${esc(e.savedAt || '')}</td>
+            <td><button class="chip apply-list">Apply</button> <button class="chip del-list">Delete</button></td>
+          </tr>`).join('')}</tbody></table></div>
+      </div>` : `<div class="empty-state">
+        <div class="empty-icon">☆</div>
+        <div class="empty-title">No saved lists yet</div>
+        <div class="empty-text">Filter the platform however you like, then hit <b>Save this search</b> — or build a comp set and save it as a list. Saved work is shared with the team through the team file.</div>
+      </div>`;
+    body.querySelectorAll('.apply-list').forEach((b) => b.addEventListener('click', (e) => {
+      IDMT.lists.apply(entries[+e.target.closest('tr').dataset.i]);
+      toast('Applied — filters updated');
+    }));
+    body.querySelectorAll('.del-list').forEach((b) => b.addEventListener('click', (e) => {
+      IDMT.lists.remove(+e.target.closest('tr').dataset.i);
+      renderActive();
+    }));
+  }
+
+  function describeSearch(s) {
+    const bits = [];
+    if (s.category) bits.push(s.category + ' lens');
+    const nMulti = Object.keys(s.multi || {}).length, nRange = Object.keys(s.range || {}).length;
+    if (nMulti) bits.push(nMulti + ' value filter' + (nMulti === 1 ? '' : 's'));
+    if (nRange) bits.push(nRange + ' range filter' + (nRange === 1 ? '' : 's'));
+    if ((s.hiddenTypes || []).length) bits.push('type selection');
+    return bits.join(' · ') || 'all properties';
+  }
+
+  function wireDataToolbar() {
+    const confOnly = document.getElementById('conf-only');
+    if (confOnly) confOnly.addEventListener('change', (e) => {
+      if (e.target.checked) IDMT.filters.multi['Confidence'] = new Set(['Confirmed']);
+      else delete IDMT.filters.multi['Confidence'];
+      IDMT.emit('filters');
+    });
+    const ss = document.getElementById('btn-save-search');
+    if (ss) ss.addEventListener('click', () => {
+      const name = prompt('Name this search:', 'Untitled search');
+      if (name) { IDMT.lists.saveSearch(name.trim()); toast('Search saved'); renderActive(); }
+    });
+    const sl = document.getElementById('btn-save-list');
+    if (sl) sl.addEventListener('click', () => {
+      if (!IDMT.compSet.count()) { toast('Add properties to the comp set first'); return; }
+      const name = prompt('Name this list:', 'Untitled list');
+      if (name) { IDMT.lists.saveList(name.trim(), IDMT.compSet.all()); toast('List saved'); renderActive(); }
+    });
+    const te = document.getElementById('btn-team-export');
+    if (te) te.addEventListener('click', () => {
+      IDMT.exportTeamFile();
+      toast('team.json downloaded — commit it to data/team.json to share with the team');
+    });
+  }
+
+  /* Confidential mode: ask for the workbook, keep it in this browser only */
+  function wireGate() {
+    const gate = document.getElementById('gate-overlay');
+    const file = document.getElementById('gate-file');
+    IDMT.on('needsWorkbook', () => gate.classList.add('show'));
+    if (!file) return;
+    file.addEventListener('change', async () => {
+      const f = file.files && file.files[0];
+      if (!f) return;
+      const buf = await f.arrayBuffer();
+      try {
+        IDMT.ingestWorkbook(buf);
+        await IDMT.localWorkbook.put(buf, f.name);
+        gate.classList.remove('show');
+        refreshAll();
+        status(`${IDMT.properties.length} properties · loaded from ${f.name} (this device only)`);
+      } catch (err) { status('Could not read ' + f.name + ': ' + err.message, true); }
+    });
+  }
+
   /* ---------- shared refresh ---------- */
 
   function refreshAll() {
@@ -208,6 +299,7 @@ IDMT.app = (function () {
     IDMT.on('filters', onFiltersChanged);
     IDMT.on('data', onDataChanged);
     IDMT.on('compset', () => { if (activeView === 'data') renderActive(); });
+    IDMT.on('lists', () => { if (activeView === 'data' && dataSubtab === 'Saved Lists') renderActive(); });
     for (const [btnId, panelId] of PANELS) {
       const btn = document.getElementById(btnId);
       if (btn) btn.addEventListener('click', () => document.getElementById(panelId).classList.toggle('open'));
@@ -330,12 +422,15 @@ IDMT.app = (function () {
       wirePanels();
       wireDock();
       wireReturn();
+      wireDataToolbar();
+      wireGate();
       wireDragDrop();
 
       document.querySelectorAll('.tab').forEach((t) =>
         t.addEventListener('click', () => switchView(t.dataset.view)));
 
       status('loading workbook…');
+      await IDMT.loadTeamFile();
       await IDMT.loadWorkbook();
       await IDMT.loadBoundaries();
       refreshAll();

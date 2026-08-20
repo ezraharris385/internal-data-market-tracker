@@ -68,7 +68,7 @@ IDMT.propertiesView = (function () {
       <tbody>${rows.map((p) => `
         <tr data-id="${esc(p._id)}">
           <td class="cmp-col"><input type="checkbox" class="cmp-check" data-id="${esc(p._id)}" ${IDMT.compSet.has(p._id) ? 'checked' : ''} /></td>
-          <td><span style="color:${IDMT.typeColors[p._type] || '#898781'}">●</span> ${esc(p._name)}</td>
+          <td><span style="color:${IDMT.typeColors[p._type] || '#898781'}">●</span> ${esc(p._name)}<span class="fresh-dot ${IDMT.freshness(p).tier}" title="${esc(IDMT.freshness(p).label)}"></span></td>
           <td>${esc([p._address, p._city].filter(Boolean).join(', '))}</td>
           ${cols.slice(2).map((c) => `<td>${cellValue(p, c)}</td>`).join('')}
         </tr>`).join('')}</tbody>`;

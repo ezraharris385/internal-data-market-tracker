@@ -275,6 +275,55 @@ IDMT.database = (function () {
     });
   }
 
+  /* Data Quality — what to trust in this tracked set, and what to go chase.
+     Straight out of Market_Analytics_Schema §3. */
+  function renderQuality(body) {
+    if (!body) return;
+    const q = IDMT.dataQuality();
+    const bar = (label, pct, tone) => `
+      <div class="dq-row">
+        <div class="dq-label">${esc(label)}</div>
+        <div class="dq-track"><div class="dq-fill ${tone || ''}" style="width:${Math.max(2, pct)}%"></div></div>
+        <div class="dq-val">${pct}%</div>
+      </div>`;
+    const dist = (obj, tones) => Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, v]) =>
+      `<div class="dq-row">
+         <div class="dq-label">${esc(k)}</div>
+         <div class="dq-track"><div class="dq-fill ${(tones && tones[k]) || ''}" style="width:${Math.max(2, Math.round((v / q.n) * 100))}%"></div></div>
+         <div class="dq-val">${v}</div>
+       </div>`).join('');
+
+    const stalePct = Math.round((q.freshness.stale / (q.n || 1)) * 100);
+    body.innerHTML = `
+      <div class="cards">
+        <div class="card"><div class="k">Records in view</div><div class="v">${q.n}</div><div class="s">the denominator for everything</div></div>
+        <div class="card"><div class="k">Median record age</div><div class="v">${q.medianAgeMonths === null ? '—' : q.medianAgeMonths + ' mo'}</div><div class="s">since last verified / as-of</div></div>
+        <div class="card"><div class="k">Confirmed</div><div class="v">${q.confidence.Confirmed || 0}<span class="n">of ${q.n}</span></div><div class="s">first-hand or verified</div></div>
+        <div class="card"><div class="k">Stale (>12 mo)</div><div class="v">${q.freshness.stale}<span class="n">${stalePct}%</span></div><div class="s">needs re-verification</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card"><h3>Field completeness — % of records carrying data</h3>
+          <div class="dq-list">${Object.entries(q.completeness).map(([k, v]) => bar(k, v)).join('')}</div></div>
+        <div class="chart-card"><h3>Confidence mix</h3>
+          <div class="dq-list">${dist(q.confidence, { Confirmed: 'good', Likely: 'mid', Unverified: 'low' })}</div></div>
+        <div class="chart-card"><h3>Source mix — a market built on hearsay should read that way</h3>
+          <div class="dq-list">${dist(q.sources)}</div></div>
+        <div class="chart-card"><h3>Freshness</h3>
+          <div class="dq-list">${dist({ 'Fresh (≤6 mo)': q.freshness.fresh, 'Aging (6–12 mo)': q.freshness.aging, 'Stale (>12 mo)': q.freshness.stale, 'No date': q.freshness.unknown },
+            { 'Fresh (≤6 mo)': 'good', 'Aging (6–12 mo)': 'mid', 'Stale (>12 mo)': 'low' })}</div></div>
+      </div>
+      <div class="table-card">
+        <h3>Build & provenance</h3>
+        <table class="detail-fields"><tbody>
+          <tr><td>Data path</td><td>${IDMT.buildInfo && IDMT.buildInfo.precomputed
+            ? `Precomputed build — <b>${esc(IDMT.buildInfo.builtAt || '')}</b> (fast path)`
+            : (IDMT.buildInfo && IDMT.buildInfo.local ? 'Loaded from your device (confidential mode)' : 'Parsed in-browser from the workbook')}</td></tr>
+          <tr><td>Team layer</td><td>${IDMT.team && IDMT.team.updatedAt ? `Shared file updated ${esc(IDMT.team.updatedAt)}` : 'No shared team file committed yet'}</td></tr>
+          <tr><td>Unshared local work</td><td>${IDMT.edits.count()} edited · ${IDMT.addedRows.count()} added — use ⇪ Team file to share</td></tr>
+        </tbody></table>
+      </div>`;
+  }
+
   function prep() {
     if (!IDMT.properties.length) return false;
     chartDefaults();
@@ -282,5 +331,5 @@ IDMT.database = (function () {
     return true;
   }
 
-  return { renderTypeChips, renderOverview, renderModule, renderMarketsDataset, prep };
+  return { renderTypeChips, renderOverview, renderModule, renderMarketsDataset, renderQuality, prep };
 })();

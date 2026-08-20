@@ -6,7 +6,7 @@
   <title>Internal Data Market Tracker</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1.8" />
+  <link rel="stylesheet" href="css/styles.css?v=2.0" />
 </head>
 <body class="mode-properties">
   <header class="topbar">
@@ -164,6 +164,12 @@
       </div>
       <div class="filters-panel inline" id="db-filters-panel"></div>
       <div class="filter-row module-tabs" id="data-subtabs"></div>
+      <div class="filter-row" id="data-toolbar">
+        <label class="conf-toggle"><input type="checkbox" id="conf-only" /> Confirmed records only</label>
+        <button class="chip" id="btn-save-search">☆ Save this search</button>
+        <button class="chip" id="btn-save-list">☆ Save comp set as list</button>
+        <button class="chip" id="btn-team-export" title="Download the shared team layer to commit as data/team.json">⇪ Team file</button>
+      </div>
       <div class="filter-row" id="db-type-filter"></div>
 
       <!-- sub-tab: Properties grid -->
@@ -176,12 +182,21 @@
         <div class="table-card"><div class="table-scroll"><table id="properties-table"></table></div></div>
       </div>
 
-      <!-- sub-tab: Market Data -->
+      <!-- sub-tab: Market Data / modules / quality / lists -->
       <div id="data-market" style="display:none">
         <div id="db-module-body"></div>
       </div>
     </div>
   </main>
+
+  <div class="gate-overlay" id="gate-overlay">
+    <div class="gate-card">
+      <div class="gate-title">Load your workbook</div>
+      <p class="gate-text">This deployment runs in <b>confidential mode</b>: your data is never stored in the repository or on the host. Choose your workbook and it stays in this browser only.</p>
+      <label class="btn-primary gate-btn">Choose .xlsx file<input type="file" id="gate-file" accept=".xlsx,.xlsm,.xls" hidden /></label>
+      <div class="gate-note">Remembered on this device for next time. Clear it any time from the Data tab.</div>
+    </div>
+  </div>
 
   <div class="drop-overlay" id="drop-overlay">
     <div class="drop-inner">Drop an <b>.xlsx</b> workbook or a boundary file (<b>.kmz / .kml / .geojson / zipped shapefile</b>) to preview it locally</div>
@@ -198,14 +213,14 @@
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="js/data.js?v=1.8"></script>
-  <script src="js/filters.js?v=1.8"></script>
-  <script src="js/comps.js?v=1.8"></script>
-  <script src="js/search.js?v=1.8"></script>
-  <script src="js/map.js?v=1.8"></script>
-  <script src="js/detail.js?v=1.8"></script>
-  <script src="js/database.js?v=1.8"></script>
-  <script src="js/properties.js?v=1.8"></script>
-  <script src="js/app.js?v=1.8"></script>
+  <script src="js/data.js?v=2.0"></script>
+  <script src="js/filters.js?v=2.0"></script>
+  <script src="js/comps.js?v=2.0"></script>
+  <script src="js/search.js?v=2.0"></script>
+  <script src="js/map.js?v=2.0"></script>
+  <script src="js/detail.js?v=2.0"></script>
+  <script src="js/database.js?v=2.0"></script>
+  <script src="js/properties.js?v=2.0"></script>
+  <script src="js/app.js?v=2.0"></script>
 </body>
 </html>

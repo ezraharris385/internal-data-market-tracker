@@ -50,12 +50,40 @@ IDMT.loadConfig = async function () {
   return IDMT.config;
 };
 
+/* Fast path: a precomputed derived.json (tools/build_data.py) skips both the xlsx
+   parse and the in-browser geo resolution. Falls back to the workbook when absent. */
 IDMT.loadWorkbook = async function () {
+  // Confidential mode: the workbook is NOT in the repo. The user loads it from
+  // their own machine each session (or we restore the last one from this browser),
+  // so private data never touches a public host.
+  if (IDMT.config.data.confidential) {
+    const cached = await IDMT.localWorkbook.restore();
+    if (cached) { IDMT.ingestWorkbook(cached); IDMT.buildInfo = { precomputed: false, local: true }; return; }
+    IDMT.columns = []; IDMT.rawRows = []; IDMT.properties = [];
+    IDMT.buildInfo = { precomputed: false, awaitingLocal: true };
+    IDMT.emit('needsWorkbook');
+    return;
+  }
+  const derived = IDMT.config.data.derived || 'data/derived.json';
+  try {
+    const res = await fetch(derived + '?v=' + Date.now());
+    if (res.ok) {
+      const payload = await res.json();
+      if (payload && Array.isArray(payload.rows) && payload.rows.length) {
+        IDMT.columns = payload.columns || Object.keys(payload.rows[0]);
+        IDMT.rawRows = payload.rows;
+        IDMT.buildInfo = { builtAt: payload.builtAt, source: payload.source, precomputed: true };
+        IDMT.rebuildProperties();
+        return;
+      }
+    }
+  } catch (e) { /* fall through to the workbook */ }
+
   const url = IDMT.config.data.workbook + '?v=' + Date.now();
   const res = await fetch(url);
   if (!res.ok) throw new Error('Workbook not found: ' + IDMT.config.data.workbook);
-  const buf = await res.arrayBuffer();
-  IDMT.ingestWorkbook(buf);
+  IDMT.buildInfo = { precomputed: false };
+  IDMT.ingestWorkbook(await res.arrayBuffer());
 };
 
 /* Accepts an ArrayBuffer of an .xlsx — used both for the repo workbook and drag-dropped files. */
@@ -74,12 +102,16 @@ IDMT.ingestWorkbook = function (arrayBuffer) {
 
 /* Rebuild normalized properties from rawRows + user-added rows + the local edit overlay. */
 IDMT.rebuildProperties = function () {
+  const teamEdits = (IDMT.team && IDMT.team.edits) || {};
   const overlay = IDMT.edits.all();
   const f = IDMT.config.fields;
   const allRows = [...IDMT.rawRows, ...IDMT.addedRows.all()];
   IDMT.properties = allRows.map((raw, i) => {
     const id = String(raw[f.id] || 'P-' + (i + 1));
-    const merged = overlay[id] ? Object.assign({}, raw, overlay[id]) : raw;
+    // committed team layer first, then this browser's unsaved work
+    const merged = (teamEdits[id] || overlay[id])
+      ? Object.assign({}, raw, teamEdits[id] || {}, overlay[id] || {})
+      : raw;
     return IDMT.normalizeRow(merged, i);
   }).filter((p) => p._lat !== null && p._lng !== null);
   IDMT.assignTypeColors();
@@ -155,9 +187,10 @@ IDMT.saveEdits = function (id, changes) {
 IDMT.exportWorkbook = function () {
   const overlay = IDMT.edits.all();
   const f = IDMT.config.fields;
+  const teamEdits = (IDMT.team && IDMT.team.edits) || {};
   const rows = [...IDMT.rawRows, ...IDMT.addedRows.all()].map((raw, i) => {
     const id = String(raw[f.id] || 'P-' + (i + 1));
-    return overlay[id] ? Object.assign({}, raw, overlay[id]) : raw;
+    return Object.assign({}, raw, teamEdits[id] || {}, overlay[id] || {});
   });
   const ws = XLSX.utils.json_to_sheet(rows, { header: IDMT.columns });
   const wb = XLSX.utils.book_new();
@@ -374,6 +407,182 @@ IDMT.assignAdminGeo = function () {
     }
     if (!p['Market']) p['Market'] = IDMT.config.market.name;
   }
+};
+
+/* ---------------- local workbook store (confidential mode) ----------------
+   Keeps the user's private workbook in this browser only (IndexedDB), so it is
+   available across sessions without ever being committed or uploaded. */
+
+IDMT.localWorkbook = (function () {
+  const DB = 'idmt-local', STORE = 'wb', KEY = 'workbook';
+  function idb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function put(buf, name) {
+    const db = await idb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put({ buf, name, at: Date.now() }, KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function restore() {
+    try {
+      const db = await idb();
+      return await new Promise((resolve) => {
+        const tx = db.transaction(STORE, 'readonly');
+        const r = tx.objectStore(STORE).get(KEY);
+        r.onsuccess = () => resolve(r.result ? r.result.buf : null);
+        r.onerror = () => resolve(null);
+      });
+    } catch (e) { return null; }
+  }
+  async function clear() {
+    const db = await idb();
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(KEY);
+  }
+  return { put, restore, clear };
+})();
+
+/* ---------------- provenance & freshness (Property_Data_Schema §9) ----------------
+   Private data goes stale silently. Every record carries where it came from, how
+   confident we are, and when it was last true — and the UI shows it. */
+
+IDMT.PROV = { source: 'Source', detail: 'Source Detail', confidence: 'Confidence', asOf: 'As-of Date', verified: 'Last Verified' };
+
+IDMT.monthsSince = function (v) {
+  const s = String(v ?? '').trim();
+  if (!s) return null;
+  const d = new Date(s.length <= 7 ? s + '-01' : s);
+  if (isNaN(d)) return null;
+  return Math.max(0, Math.round((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 30.44)));
+};
+
+/* fresh (<6mo) | aging (6-12) | stale (>12) | unknown */
+IDMT.freshness = function (p) {
+  const m = IDMT.monthsSince(p[IDMT.PROV.verified]) ?? IDMT.monthsSince(p[IDMT.PROV.asOf]);
+  if (m === null) return { tier: 'unknown', months: null, label: 'No as-of date' };
+  if (m <= 6) return { tier: 'fresh', months: m, label: `Verified ${m} mo ago` };
+  if (m <= 12) return { tier: 'aging', months: m, label: `${m} mo old` };
+  return { tier: 'stale', months: m, label: `Stale — ${m} mo old` };
+};
+
+IDMT.confidenceOf = (p) => String(p[IDMT.PROV.confidence] ?? '').trim() || 'Unverified';
+
+/* Data-quality roll-up for the tracked set: what to trust, what to chase. */
+IDMT.dataQuality = function (props) {
+  const list = props || IDMT.filteredProperties();
+  const n = list.length || 1;
+  const conf = {}, src = {}, fresh = { fresh: 0, aging: 0, stale: 0, unknown: 0 };
+  let monthsSum = 0, monthsN = 0;
+  for (const p of list) {
+    conf[IDMT.confidenceOf(p)] = (conf[IDMT.confidenceOf(p)] || 0) + 1;
+    const s = String(p[IDMT.PROV.source] ?? '').trim() || 'Unrecorded';
+    src[s] = (src[s] || 0) + 1;
+    const f = IDMT.freshness(p);
+    fresh[f.tier] += 1;
+    if (f.months !== null) { monthsSum += f.months; monthsN += 1; }
+  }
+  const filled = (col) => list.filter((p) => String(p[col] ?? '').trim() !== '').length;
+  return {
+    n: list.length,
+    confidence: conf,
+    sources: src,
+    freshness: fresh,
+    medianAgeMonths: monthsN ? Math.round(monthsSum / monthsN) : null,
+    completeness: {
+      'Lease data': Math.round((filled('Available SF') / n) * 100),
+      'Sale history': Math.round((filled('Last Sale Price') / n) * 100),
+      'Debt terms': Math.round((filled('Loan Amount ($)') / n) * 100),
+      'Operations (NOI)': Math.round((filled('NOI ($)') / n) * 100),
+      'Provenance': Math.round((filled(IDMT.PROV.source) / n) * 100),
+    },
+  };
+};
+
+/* ---------------- saved lists & searches ---------------- */
+
+IDMT.lists = (function () {
+  const KEY = 'idmt-lists';
+  let cache = null;
+  function all() {
+    if (cache === null) {
+      try { cache = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { cache = []; }
+    }
+    return cache;
+  }
+  function persist() { localStorage.setItem(KEY, JSON.stringify(cache)); IDMT.emit('lists'); }
+  /* kind: 'list' (explicit property ids) | 'search' (filter state) */
+  function saveList(name, ids) {
+    all().push({ kind: 'list', name, ids: [...ids], savedAt: new Date().toISOString().slice(0, 10) });
+    persist();
+  }
+  function saveSearch(name) {
+    const f = IDMT.filters;
+    all().push({
+      kind: 'search', name, savedAt: new Date().toISOString().slice(0, 10),
+      state: {
+        hiddenTypes: [...f.hiddenTypes],
+        multi: Object.fromEntries(Object.entries(f.multi).map(([k, v]) => [k, [...v]])),
+        range: JSON.parse(JSON.stringify(f.range)),
+        category: f.category, text: f.text,
+      },
+    });
+    persist();
+  }
+  function apply(entry) {
+    if (entry.kind === 'list') {
+      IDMT.filters.multi[IDMT.config.fields.id] = new Set(entry.ids);
+    } else {
+      const s = entry.state, f = IDMT.filters;
+      f.hiddenTypes = new Set(s.hiddenTypes || []);
+      f.multi = Object.fromEntries(Object.entries(s.multi || {}).map(([k, v]) => [k, new Set(v)]));
+      f.range = JSON.parse(JSON.stringify(s.range || {}));
+      f.category = s.category || '';
+      f.text = s.text || '';
+    }
+    IDMT.emit('filters');
+  }
+  function remove(i) { all().splice(i, 1); persist(); }
+  function replaceAll(entries) { cache = entries; persist(); }
+  return { all, saveList, saveSearch, apply, remove, replaceAll };
+})();
+
+/* ---------------- team file: multi-user via the repo ----------------
+   data/team.json carries shared notes, field edits, and saved lists. It loads at
+   boot as the team baseline; this browser's own unsaved work layers on top. Export
+   the file, commit it, and the whole team sees the same thing. */
+
+IDMT.team = { edits: {}, lists: [], updatedAt: null };
+
+IDMT.loadTeamFile = async function () {
+  try {
+    const res = await fetch((IDMT.config.data.team || 'data/team.json') + '?v=' + Date.now());
+    if (!res.ok) return;
+    const t = await res.json();
+    IDMT.team = { edits: t.edits || {}, lists: t.lists || [], updatedAt: t.updatedAt || null };
+    if (IDMT.team.lists.length && !IDMT.lists.all().length) IDMT.lists.replaceAll(IDMT.team.lists);
+  } catch (e) { /* no team file yet — fine */ }
+};
+
+IDMT.exportTeamFile = function () {
+  const payload = {
+    updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+    note: 'Shared team layer for the Internal Data Market Tracker. Commit to data/team.json.',
+    edits: Object.assign({}, IDMT.team.edits, IDMT.edits.all()),
+    lists: IDMT.lists.all(),
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'team.json'; a.click();
+  URL.revokeObjectURL(url);
 };
 
 /* ---------------- module aggregation (database sub-tabs) ---------------- */

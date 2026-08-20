@@ -80,6 +80,24 @@ Then open http://localhost:8000. (Opening `index.html` directly from disk won't 
 
 Zero build step, zero backend. MapLibre GL JS (map + 3D), OpenFreeMap tiles (no API key), SheetJS (xlsx parsing in-browser), JSZip + togeojson (KMZ → GeoJSON), Chart.js (analytics). All from CDNs.
 
+## Scale, provenance, sharing, and confidentiality
+
+**Fast data path.** `tools/build_data.py` precomputes everything the browser would otherwise derive on load — the xlsx parse and all point-in-polygon geography — into `data/derived.json`. Run it after any data change:
+
+```bash
+uv run --with openpyxl,shapely python tools/build_data.py
+```
+
+The app uses that file when present and falls back to parsing the workbook in-browser when it isn't, so nothing breaks if you forget. This is what lets the platform hold thousands of properties without a slow first paint.
+
+**Provenance & staleness.** Every record can carry `Source`, `Source Detail`, `Confidence`, `As-of Date`, and `Last Verified`. Property pages show them as chips, the properties grid shows a freshness dot (green ≤6 mo, amber 6–12, red >12), and **Data → Data Quality** rolls the whole tracked set up: field completeness, confidence mix, source mix, freshness distribution, and median record age. A "Confirmed records only" toggle filters the entire platform to verified data.
+
+**Team sharing (multi-user).** `data/team.json` is the shared layer — notes, field edits, and saved lists. It loads at boot as the team baseline; your own unsaved work layers on top. Click **⇪ Team file** in the Data tab, commit the download to `data/team.json`, and the whole team sees the same thing. (A real backend is the next step if you outgrow git as the sync mechanism.)
+
+**Saved lists & searches.** Filter however you like → **☆ Save this search**; or build a comp set → **☆ Save comp set as list**. Both live under Data → Saved Lists and travel in the team file.
+
+**Confidential mode.** Set `config.json → data.confidential` to `true` and the platform stops expecting a workbook in the repository. Instead each user loads their own file, which is kept in that browser only (IndexedDB) and never committed or uploaded — so genuinely private data can run on public hosting. Use this, or a private repo, before loading a real internal book.
+
 ## Data provenance — what's real vs. sample
 
 | Layer / data | Source | Status |

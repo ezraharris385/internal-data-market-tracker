@@ -57,6 +57,24 @@ IDMT.detail = (function () {
     </details>`;
   }
 
+  /* Provenance strip: where this record came from, how sure we are, how old it is.
+     Private data goes stale silently — this makes it impossible to miss. */
+  function provStrip(p) {
+    const P = IDMT.PROV;
+    const src = String(p[P.source] ?? '').trim();
+    const conf = IDMT.confidenceOf(p);
+    const fr = IDMT.freshness(p);
+    if (!src && fr.tier === 'unknown') {
+      return `<div class="prov-strip"><span class="prov-pill unknown">No provenance recorded</span></div>`;
+    }
+    const cls = { Confirmed: 'ok', Likely: 'mid', Unverified: 'low' }[conf] || 'low';
+    return `<div class="prov-strip">
+      ${src ? `<span class="prov-pill" title="${esc(String(p[P.detail] ?? ''))}">${esc(src)}</span>` : ''}
+      <span class="prov-pill ${cls}">${esc(conf)}</span>
+      <span class="prov-pill ${fr.tier}">${esc(fr.label)}</span>
+    </div>`;
+  }
+
   /* Owner intelligence: a prospecting hook — everything else this owner holds. */
   function ownerBlock(p) {
     const owner = String(p['Owner'] ?? '').trim();
@@ -95,6 +113,7 @@ IDMT.detail = (function () {
           <span style="color:${color}">●</span> ${esc(p._type)}${p._submarket ? ' · ' + esc(p._submarket) + ' Submarket' : ''}
         </span>
         ${IDMT.config.data.sample ? `<div class="sample-badge" title="${esc(IDMT.config.data.sampleNote || '')}">⚠ Sample data — fictional record, to be replaced</div>` : ''}
+        ${provStrip(p)}
         <div class="detail-actions top">
           <button class="btn-ghost sm ${IDMT.compSet.has(p._id) ? 'on' : ''}" id="detail-comp">${IDMT.compSet.has(p._id) ? '✓ In comp set' : '＋ Comp set'}</button>
           <button class="btn-ghost sm" id="detail-edit">${editing ? 'Cancel' : '✎ Edit'}</button>

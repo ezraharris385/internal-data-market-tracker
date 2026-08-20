@@ -29,7 +29,10 @@
     "workbook": "data/properties.xlsx",
     "sheet": "Properties",
     "sample": true,
-    "sampleNote": "SAMPLE DATA — this property record is fictional demo data; replace data/properties.xlsx with your internal workbook."
+    "sampleNote": "SAMPLE DATA — this property record is fictional demo data; replace data/properties.xlsx with your internal workbook.",
+    "derived": "data/derived.json",
+    "team": "data/team.json",
+    "confidential": false
   },
   "layers": {
     "submarkets": {

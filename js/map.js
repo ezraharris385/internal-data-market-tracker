@@ -173,7 +173,7 @@ IDMT.map = (function () {
           // Kept bright enough to separate clearly from the near-black basemap.
           'fill-extrusion-color': [
             'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], ['get', 'height'], 12],
-            0, '#454b59', 40, '#59617a', 100, '#737e9e', 200, '#97a3c4',
+            0, '#3f4653', 40, '#545d73', 100, '#6f7a99', 200, '#96a2c6',
           ],
           'fill-extrusion-height': buildingHeightExpr(1),
           'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], ['get', 'min_height'], 0],
@@ -316,7 +316,7 @@ IDMT.map = (function () {
       id: 'idmt-msa-line', type: 'line', source: 'idmt-msa',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-color': '#5c9bea',
+        'line-color': '#5aa0f0',
         'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 3.2],
         'line-opacity': 0.9,
       },
@@ -344,7 +344,7 @@ IDMT.map = (function () {
         'text-transform': 'uppercase',
         'text-allow-overlap': true,
       },
-      paint: { 'text-color': '#aebfd2', 'text-halo-color': '#0d0d0d', 'text-halo-width': 2 },
+      paint: { 'text-color': '#aebfd2', 'text-halo-color': '#0a0b0d', 'text-halo-width': 2 },
     });
 
     // Cities: finer teal lines + labels that auto-declutter (toggle, default off)
@@ -367,7 +367,7 @@ IDMT.map = (function () {
         'text-size': ['interpolate', ['linear'], ['zoom'], 9, 10, 13, 12.5],
         'text-transform': 'none',
       },
-      paint: { 'text-color': '#8fd4c8', 'text-halo-color': '#0d0d0d', 'text-halo-width': 1.6 },
+      paint: { 'text-color': '#8fd4c8', 'text-halo-color': '#0a0b0d', 'text-halo-width': 1.6 },
     });
   }
 
@@ -427,7 +427,7 @@ IDMT.map = (function () {
         'text-allow-overlap': true,
         'text-ignore-placement': false,
       },
-      paint: { 'text-color': '#d6d2f5', 'text-halo-color': '#0d0d0d', 'text-halo-width': 2 },
+      paint: { 'text-color': '#d6d2f5', 'text-halo-color': '#0a0b0d', 'text-halo-width': 2 },
     });
     map.addLayer({
       id: 'idmt-parcels-fill', type: 'fill', source: 'idmt-parcels',
@@ -457,7 +457,7 @@ IDMT.map = (function () {
       paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 3.2, 14, 6.5],
         'circle-color': ['get', 'color'],
-        'circle-stroke-color': '#0d0d0d',
+        'circle-stroke-color': '#0a0b0d',
         'circle-stroke-width': 1.2,
       },
     });
